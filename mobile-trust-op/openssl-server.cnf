@@ -1,0 +1,33 @@
+[ req ]
+default_bits        = 2048
+distinguished_name  = req_distinguished_name
+x509_extensions     = v3_req_server
+string_mask         = utf8only
+
+[ req_distinguished_name ]
+countryName         = Country Name (2 letter code)
+countryName_default = AU
+
+stateOrProvinceName         = State or Province Name (full name)
+stateOrProvinceName_default = NSW
+
+localityName                = Locality Name (eg, city)
+localityName_default        = Sydney
+
+organizationName            = Organization Name (eg, company)
+organizationName_default    = MY DIGITAL ID PTY LTD
+
+commonName                  = Common Name (eg, YOUR name)
+commonName_default          = localhost
+
+emailAddress                = Email Address
+emailAddress_default        = admin@mydigitalid.info
+
+[ v3_req_server ]
+basicConstraints        = CA:FALSE
+keyUsage                = critical, digitalSignature, keyEncipherment
+extendedKeyUsage        = serverAuth
+subjectAltName          = @alt_names
+
+[ alt_names ]
+DNS.1 = localhost

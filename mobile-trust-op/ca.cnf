@@ -1,0 +1,48 @@
+[ ca ]
+default_ca = CA_default
+
+[ CA_default ]
+dir               = ./certificates             # Where everything is kept
+certs             = $dir/certs                 # Where the issued certs are kept
+crl_dir           = $dir/crl                   # Where the issued crl are kept
+new_certs_dir     = $dir/newcerts              # Default place for new certs
+database          = $dir/index.txt             # Database index file
+serial            = $dir/serial                # The current serial number
+RANDFILE          = $dir/private/.rand         # Private random number file
+certificate       = $dir/ca.crt                # The CA certificate
+private_key       = $dir/ca.key                # The private key
+default_md        = sha256                     # Use SHA-256 by default
+policy            = policy_any                 # Define the CA policy
+default_days      = 3650                       # How long to certify for
+email_in_dn       = no                         # Don't add the email to the DN
+name_opt          = ca_default                 # Name options
+cert_opt          = ca_default                 # Certificate field options
+copy_extensions   = copy                       # Copy extensions from request
+
+[ policy_any ]
+countryName             = supplied
+stateOrProvinceName     = supplied
+organizationName        = supplied
+organizationalUnitName  = optional
+commonName              = supplied
+emailAddress            = optional
+
+[ req ]
+default_bits            = 4096
+prompt                  = no
+default_md              = sha256
+distinguished_name      = req_distinguished_name
+x509_extensions         = v3_ca                 # The extensions to add to the cert
+
+[ req_distinguished_name ]
+countryName             = AU
+stateOrProvinceName     = NSW
+localityName            = Sydney
+organizationName        = MY DIGITAL ID PTY LTD
+commonName              = localhost
+
+[ v3_ca ]
+subjectKeyIdentifier    = hash
+authorityKeyIdentifier  = keyid:always,issuer
+basicConstraints        = critical, CA:true
+keyUsage                = critical, cRLSign, keyCertSign

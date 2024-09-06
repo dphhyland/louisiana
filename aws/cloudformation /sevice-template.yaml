@@ -1,0 +1,123 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CloudFormation template for deploying a containerized service for a client
+
+Parameters:
+  ClientName:
+    Type: String
+    Description: Name of the client subscribing to the service
+
+  ServiceName:
+    Type: String
+    Description: Name of the service being deployed
+
+  ContainerImage:
+    Type: String
+    Description: ECR Image URI for the service container
+
+  Cpu:
+    Type: String
+    Default: '256'
+    Description: The number of CPU units to reserve for the container
+
+  Memory:
+    Type: String
+    Default: '512'
+    Description: The amount of memory (in MiB) to allocate for the container
+
+  EnvironmentVariables:
+    Type: CommaDelimitedList
+    Description: Environment variables to be passed to the container
+
+Resources:
+  ECSCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: !Sub ${ClientName}-${ServiceName}-Cluster
+
+  ECSFargateTaskExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: ecsTaskExecutionRolePolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ecr:GetDownloadUrlForLayer
+                  - ecr:BatchGetImage
+                  - ecr:GetAuthorizationToken
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: '*'
+
+  ECSTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Sub ${ClientName}-${ServiceName}-TaskDefinition
+      Cpu: !Ref Cpu
+      Memory: !Ref Memory
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      ExecutionRoleArn: !GetAtt ECSFargateTaskExecutionRole.Arn
+      ContainerDefinitions:
+        - Name: !Sub ${ServiceName}Container
+          Image: !Ref ContainerImage
+          Essential: true
+          Environment:
+            - Name: ENV_VARIABLE_1
+              Value: !Select
+                - 0
+                - !Ref EnvironmentVariables
+            - Name: ENV_VARIABLE_2
+              Value: !Select
+                - 1
+                - !Ref EnvironmentVariables
+          PortMappings:
+            - ContainerPort: 80
+              HostPort: 80
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Sub /ecs/${ClientName}-${ServiceName}
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: ecs
+
+  ECSFargateService:
+    Type: AWS::ECS::Service
+    Properties:
+      Cluster: !Ref ECSCluster
+      DesiredCount: 1
+      LaunchType: FARGATE
+      TaskDefinition: !Ref ECSTaskDefinition
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets:
+            - !ImportValue PublicSubnetId
+          SecurityGroups:
+            - !Ref ECSSecurityGroup
+
+  ECSSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Sub Security group for ${ClientName}-${ServiceName} ECS service
+      VpcId: !ImportValue VPCId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+
+Outputs:
+  ServiceName:
+    Value: !Ref ServiceName
+    Description: Name of the ECS service deployed for the client
