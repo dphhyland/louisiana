@@ -4,14 +4,7 @@ Transform: AWS::Serverless-2016-10-31
 Description: |
   Serverless application with two API Gateways: OP Gateway for Authorization Server (AS) with mTLS, and mock-telco-o Gateway for the Trust Score API.
 
-Globals:
-  Function:
-    Timeout: 30
-    Runtime: nodejs18.x
-    MemorySize: 128
-
 Parameters:
-
   OPCertificateArn:
     Type: String
     Default: arn:aws:acm:ap-southeast-2:615299729910:certificate/c8c989fd-1eec-4a88-913e-19bb202acda5
@@ -23,98 +16,134 @@ Parameters:
     Description: The ACM certificate ARN for mock-telco-o.api.trustframeworks.io.
 
 Resources:
-  ### S3 Bucket for CA Certificate ###
-  CACertificateBucket:
-    Type: AWS::S3::Bucket
+  CACertificateBucketPolicy:
+    Type: AWS::S3::BucketPolicy
     Properties:
-      BucketName: !Sub ca-certificate-bucket-${AWS::AccountId}-${AWS::Region}
-      VersioningConfiguration:
-        Status: Enabled
-      PublicAccessBlockConfiguration:
-        BlockPublicAcls: true
-        BlockPublicPolicy: true
-        IgnorePublicAcls: true
-        RestrictPublicBuckets: true
+      Bucket: com.trustframeworks
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AllowAPIGatewayAccess
+            Effect: Allow
+            Principal:
+              Service: apigateway.amazonaws.com
+            Action: s3:GetObject
+            Resource: arn:aws:s3:::com.trustframeworks/certs/ca.crt
 
-  ### OpenID Provider Lambda (AS) ###
   OPFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: src/mock-telco-op # Your OpenID Provider function code directory
-      Handler: app.handler # Main handler for the OP Lambda function
+      CodeUri: src/mock-telco-op
+      Handler: app.handler
+      Runtime: nodejs18.x
       Environment:
         Variables:
-          ISSUER_URL: !Join
-            - ''
-            - - https://
-              - !GetAtt OPDomain.DomainName
+          ISSUER_URL: !Sub https://${OPDomainName.DomainName}
       Events:
-        OPAPI:
+        AnyPath:
           Type: Api
           Properties:
-            RestApiId: !Ref OPGateway
-            Path: /op
+            Path: /{proxy+}
             Method: ANY
+            RestApiId: !Ref OPGateway
 
-  ### Trust Score Lambda (API) for mock-telco-o Gateway ###
   TrustScoreFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: src/api # Your Trust Score function code directory
-      Handler: app.handler # Main handler for the Trust Score Lambda function
+      CodeUri: src/api
+      Handler: app.handler
+      Runtime: nodejs18.x
       Environment:
         Variables:
           JWT_ISSUER: telcoexample.com
       Events:
-        TrustScoreAPI:
+        TrustScore:
           Type: Api
           Properties:
-            RestApiId: !Ref MockTelcoGateway
             Path: /trust-score
             Method: POST
+            RestApiId: !Ref MockTelcoGateway
 
-  ### API Gateway for OpenID Provider with mTLS ###
   OPGateway:
     Type: AWS::Serverless::Api
     Properties:
       StageName: Prod
-      Domain:
-        DomainName: sandbox.as.trustframeworks.io
-        CertificateArn: !Ref OPCertificateArn # ACM certificate for server-side TLS
-        MutualTlsAuthentication:
-          TruststoreUri: !Sub s3://${CACertificateBucket}/certs/ca.crt # Preset to "certs/ca.crt"
-          TruststoreVersion: '1'
+      EndpointConfiguration: REGIONAL
 
-  ### API Gateway for mock-telco-o Trust Score API ###
   MockTelcoGateway:
     Type: AWS::Serverless::Api
     Properties:
       StageName: Prod
-      Domain:
-        DomainName: mock-telco-o.api.trustframeworks.io
-        CertificateArn: !Ref MockTelcoCertificateArn
+      EndpointConfiguration: REGIONAL
 
-  ### Custom Domain Name for OpenID Provider (AS) with mTLS ###
-  OPDomain:
+  OPGatewayStage:
+    Type: AWS::ApiGateway::Stage
+    Properties:
+      DeploymentId: !Ref OPGatewayDeployment
+      RestApiId: !Ref OPGateway
+      StageName: Prod
+
+  MockTelcoGatewayStage:
+    Type: AWS::ApiGateway::Stage
+    Properties:
+      DeploymentId: !Ref MockTelcoGatewayDeployment
+      RestApiId: !Ref MockTelcoGateway
+      StageName: Prod
+
+  OPGatewayDeployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn: OPFunction
+    Properties:
+      RestApiId: !Ref OPGateway
+
+  MockTelcoGatewayDeployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn: TrustScoreFunction
+    Properties:
+      RestApiId: !Ref MockTelcoGateway
+
+  OPDomainName:
     Type: AWS::ApiGateway::DomainName
     Properties:
       DomainName: sandbox.as.trustframeworks.io
       RegionalCertificateArn: !Ref OPCertificateArn
+      SecurityPolicy: TLS_1_2
       EndpointConfiguration:
         Types:
           - REGIONAL
+      MutualTlsAuthentication:
+        TruststoreUri: s3://com.trustframeworks/certs/ca.crt
 
-  ### Custom Domain Name for mock-telco-o API ###
-  MockTelcoDomain:
+  MockTelcoDomainName:
     Type: AWS::ApiGateway::DomainName
     Properties:
       DomainName: mock-telco-o.api.trustframeworks.io
       RegionalCertificateArn: !Ref MockTelcoCertificateArn
+      SecurityPolicy: TLS_1_2
       EndpointConfiguration:
         Types:
           - REGIONAL
 
-  ### Route 53 Record for sandbox.as.trustframeworks.io ###
+  OPDomainNameApiMapping:
+    Type: AWS::ApiGateway::BasePathMapping
+    DependsOn:
+      - OPGatewayStage
+      - OPDomainName
+    Properties:
+      DomainName: !Ref OPDomainName
+      RestApiId: !Ref OPGateway
+      Stage: Prod
+
+  MockTelcoDomainNameApiMapping:
+    Type: AWS::ApiGateway::BasePathMapping
+    DependsOn:
+      - MockTelcoGatewayStage
+      - MockTelcoDomainName
+    Properties:
+      DomainName: !Ref MockTelcoDomainName
+      RestApiId: !Ref MockTelcoGateway
+      Stage: Prod
+
   SandboxASRecordSet:
     Type: AWS::Route53::RecordSet
     Properties:
@@ -122,10 +151,9 @@ Resources:
       Name: sandbox.as.trustframeworks.io
       Type: A
       AliasTarget:
-        DNSName: !GetAtt OPDomain.RegionalDomainName
-        HostedZoneId: !GetAtt OPDomain.RegionalHostedZoneId
+        DNSName: !GetAtt OPDomainName.RegionalDomainName
+        HostedZoneId: !GetAtt OPDomainName.RegionalHostedZoneId
 
-  ### Route 53 Record for mock-telco-o.api.trustframeworks.io ###
   MockTelcoRecordSet:
     Type: AWS::Route53::RecordSet
     Properties:
@@ -133,22 +161,14 @@ Resources:
       Name: mock-telco-o.api.trustframeworks.io
       Type: A
       AliasTarget:
-        DNSName: !GetAtt MockTelcoDomain.RegionalDomainName
-        HostedZoneId: !GetAtt MockTelcoDomain.RegionalHostedZoneId
+        DNSName: !GetAtt MockTelcoDomainName.RegionalDomainName
+        HostedZoneId: !GetAtt MockTelcoDomainName.RegionalHostedZoneId
 
 Outputs:
   OPGatewayURL:
     Description: URL for OpenID Provider API Gateway (mTLS enabled)
-    Value: !Join
-      - ''
-      - - https://
-        - !GetAtt OPDomain.DomainName
-        - /Prod/op
+    Value: !Sub https://${OPDomainName.DomainName}/Prod
 
   MockTelcoGatewayURL:
     Description: URL for mock-telco-o API Gateway hosting the Trust Score API
-    Value: !Join
-      - ''
-      - - https://
-        - !GetAtt MockTelcoDomain.DomainName
-        - /Prod/trust-score
+    Value: !Sub https://${MockTelcoDomainName.DomainName}/Prod/trust-score

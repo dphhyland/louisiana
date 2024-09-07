@@ -4,11 +4,6 @@ Description: 'Serverless application with two API Gateways: OP Gateway for Autho
   Server (AS) with mTLS, and mock-telco-o Gateway for the Trust Score API.
 
   '
-Globals:
-  Function:
-    Timeout: 30
-    Runtime: nodejs18.x
-    MemorySize: 128
 Parameters:
   OPCertificateArn:
     Type: String
@@ -19,40 +14,37 @@ Parameters:
     Default: arn:aws:acm:ap-southeast-2:615299729910:certificate/9f2a8df4-841c-46c9-b585-84f09afc8613
     Description: The ACM certificate ARN for mock-telco-o.api.trustframeworks.io.
 Resources:
-  CACertificateBucket:
-    Type: AWS::S3::Bucket
+  CACertificateBucketPolicy:
+    Type: AWS::S3::BucketPolicy
     Properties:
-      BucketName:
-        Fn::Sub: ca-certificate-bucket-${AWS::AccountId}-${AWS::Region}
-      VersioningConfiguration:
-        Status: Enabled
-      PublicAccessBlockConfiguration:
-        BlockPublicAcls: true
-        BlockPublicPolicy: true
-        IgnorePublicAcls: true
-        RestrictPublicBuckets: true
+      Bucket: com.trustframeworks
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Sid: AllowAPIGatewayAccess
+          Effect: Allow
+          Principal:
+            Service: apigateway.amazonaws.com
+          Action: s3:GetObject
+          Resource: arn:aws:s3:::com.trustframeworks/certs/ca.crt
   OPFunction:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: OPFunction
       Handler: app.handler
+      Runtime: nodejs18.x
       Environment:
         Variables:
           ISSUER_URL:
-            Fn::Join:
-            - ''
-            - - https://
-              - Fn::GetAtt:
-                - OPDomain
-                - DomainName
+            Fn::Sub: https://${OPDomainName.DomainName}
       Events:
-        OPAPI:
+        AnyPath:
           Type: Api
           Properties:
+            Path: /{proxy+}
+            Method: ANY
             RestApiId:
               Ref: OPGateway
-            Path: /op
-            Method: ANY
     Metadata:
       SamResourceId: OPFunction
   TrustScoreFunction:
@@ -60,57 +52,102 @@ Resources:
     Properties:
       CodeUri: TrustScoreFunction
       Handler: app.handler
+      Runtime: nodejs18.x
       Environment:
         Variables:
           JWT_ISSUER: telcoexample.com
       Events:
-        TrustScoreAPI:
+        TrustScore:
           Type: Api
           Properties:
-            RestApiId:
-              Ref: MockTelcoGateway
             Path: /trust-score
             Method: POST
+            RestApiId:
+              Ref: MockTelcoGateway
     Metadata:
       SamResourceId: TrustScoreFunction
   OPGateway:
     Type: AWS::Serverless::Api
     Properties:
       StageName: Prod
-      Domain:
-        DomainName: sandbox.as.trustframeworks.io
-        CertificateArn:
-          Ref: OPCertificateArn
-        MutualTlsAuthentication:
-          TruststoreUri:
-            Fn::Sub: s3://${CACertificateBucket}/certs/ca.crt
-          TruststoreVersion: '1'
+      EndpointConfiguration: REGIONAL
   MockTelcoGateway:
     Type: AWS::Serverless::Api
     Properties:
       StageName: Prod
-      Domain:
-        DomainName: mock-telco-o.api.trustframeworks.io
-        CertificateArn:
-          Ref: MockTelcoCertificateArn
-  OPDomain:
+      EndpointConfiguration: REGIONAL
+  OPGatewayStage:
+    Type: AWS::ApiGateway::Stage
+    Properties:
+      DeploymentId:
+        Ref: OPGatewayDeployment
+      RestApiId:
+        Ref: OPGateway
+      StageName: Prod
+  MockTelcoGatewayStage:
+    Type: AWS::ApiGateway::Stage
+    Properties:
+      DeploymentId:
+        Ref: MockTelcoGatewayDeployment
+      RestApiId:
+        Ref: MockTelcoGateway
+      StageName: Prod
+  OPGatewayDeployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn: OPFunction
+    Properties:
+      RestApiId:
+        Ref: OPGateway
+  MockTelcoGatewayDeployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn: TrustScoreFunction
+    Properties:
+      RestApiId:
+        Ref: MockTelcoGateway
+  OPDomainName:
     Type: AWS::ApiGateway::DomainName
     Properties:
       DomainName: sandbox.as.trustframeworks.io
       RegionalCertificateArn:
         Ref: OPCertificateArn
+      SecurityPolicy: TLS_1_2
       EndpointConfiguration:
         Types:
         - REGIONAL
-  MockTelcoDomain:
+      MutualTlsAuthentication:
+        TruststoreUri: s3://com.trustframeworks/certs/ca.crt
+  MockTelcoDomainName:
     Type: AWS::ApiGateway::DomainName
     Properties:
       DomainName: mock-telco-o.api.trustframeworks.io
       RegionalCertificateArn:
         Ref: MockTelcoCertificateArn
+      SecurityPolicy: TLS_1_2
       EndpointConfiguration:
         Types:
         - REGIONAL
+  OPDomainNameApiMapping:
+    Type: AWS::ApiGateway::BasePathMapping
+    DependsOn:
+    - OPGatewayStage
+    - OPDomainName
+    Properties:
+      DomainName:
+        Ref: OPDomainName
+      RestApiId:
+        Ref: OPGateway
+      Stage: Prod
+  MockTelcoDomainNameApiMapping:
+    Type: AWS::ApiGateway::BasePathMapping
+    DependsOn:
+    - MockTelcoGatewayStage
+    - MockTelcoDomainName
+    Properties:
+      DomainName:
+        Ref: MockTelcoDomainName
+      RestApiId:
+        Ref: MockTelcoGateway
+      Stage: Prod
   SandboxASRecordSet:
     Type: AWS::Route53::RecordSet
     Properties:
@@ -120,11 +157,11 @@ Resources:
       AliasTarget:
         DNSName:
           Fn::GetAtt:
-          - OPDomain
+          - OPDomainName
           - RegionalDomainName
         HostedZoneId:
           Fn::GetAtt:
-          - OPDomain
+          - OPDomainName
           - RegionalHostedZoneId
   MockTelcoRecordSet:
     Type: AWS::Route53::RecordSet
@@ -135,30 +172,18 @@ Resources:
       AliasTarget:
         DNSName:
           Fn::GetAtt:
-          - MockTelcoDomain
+          - MockTelcoDomainName
           - RegionalDomainName
         HostedZoneId:
           Fn::GetAtt:
-          - MockTelcoDomain
+          - MockTelcoDomainName
           - RegionalHostedZoneId
 Outputs:
   OPGatewayURL:
     Description: URL for OpenID Provider API Gateway (mTLS enabled)
     Value:
-      Fn::Join:
-      - ''
-      - - https://
-        - Fn::GetAtt:
-          - OPDomain
-          - DomainName
-        - /Prod/op
+      Fn::Sub: https://${OPDomainName.DomainName}/Prod
   MockTelcoGatewayURL:
     Description: URL for mock-telco-o API Gateway hosting the Trust Score API
     Value:
-      Fn::Join:
-      - ''
-      - - https://
-        - Fn::GetAtt:
-          - MockTelcoDomain
-          - DomainName
-        - /Prod/trust-score
+      Fn::Sub: https://${MockTelcoDomainName.DomainName}/Prod/trust-score
