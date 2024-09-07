@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "jose": "^5.8.0",
+    "pem-jwk": "^2.0.0"
+  }
+}
