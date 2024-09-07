@@ -8,5 +8,14 @@
     "oidc-provider": "^8.5.1",
     "path": "^0.12.7",
     "url": "^0.11.4"
-  }
+  },
+  "name": "mock-telco-op",
+  "version": "1.0.0",
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": ""
 }

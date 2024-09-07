@@ -1,0 +1,94 @@
+openapi: 3.0.1
+info:
+  title: Trust Score API
+  description: API for providing a trust score for a mobile phone number.
+  version: 1.0.0
+servers:
+  - url: https://localhost:4000
+    description: Local development server
+
+paths:
+  /api/trust-score:
+    post:
+      summary: Get Trust Score for a Mobile Phone Number
+      description: Returns a trust score for the provided mobile phone number in a signed JWT.
+      operationId: getTrustScore
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                mobile_number:
+                  type: string
+                  description: The mobile phone number in E.164 format (e.g., +1234567890)
+                  example: "+1234567890"
+      responses:
+        '200':
+          description: Successfully retrieved trust score
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  trust_score:
+                    type: integer
+                    description: The trust score of the mobile number
+                    example: 75
+                  mobile_number:
+                    type: string
+                    description: The requested mobile phone number in E.164 format
+                    example: "+1234567890"
+        '400':
+          description: Bad Request - Invalid input data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message
+                    example: "Mobile number is required"
+        '401':
+          description: Unauthorized - Invalid or missing token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message
+                    example: "Invalid or missing token"
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message
+                    example: "Internal server error"
+      security:
+        - bearerAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    TrustScoreResponse:
+      type: object
+      properties:
+        trust_score:
+          type: integer
+          description: Trust score associated with the mobile number.
+        mobile_number:
+          type: string
+          description: The mobile number for which the trust score is provided.

@@ -1,0 +1,10 @@
+version = 0.1
+[default.deploy.parameters]
+stack_name = "sam-app"
+resolve_s3 = true
+s3_prefix = "sam-app"
+region = "ap-southeast-2"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "HostedZoneId=\"Z04859113RMVSAYT46EAR\" OPCertificateArn=\"arn:aws:acm:ap-southeast-2:615299729910:certificate/c8c989fd-1eec-4a88-913e-19bb202acda5\" MockTelcoCertificateArn=\"arn:aws:acm:ap-southeast-2:615299729910:certificate/9f2a8df4-841c-46c9-b585-84f09afc8613\""
+image_repositories = []
