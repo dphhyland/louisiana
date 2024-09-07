@@ -9,7 +9,6 @@ import { verifyToken } from './tokenUtils.mjs'; // Function to verify the JWT to
 const __dirname = path.resolve();
 const serverKey = fs.readFileSync(path.resolve(__dirname, '../certificates/server.key'), 'utf8'); // Private key for the server
 const serverCert = fs.readFileSync(path.resolve(__dirname, '../certificates/server.crt')); // Public certificate for the server
-const caCert = fs.readFileSync(path.resolve(__dirname, '../certificates/ca.crt')); // CA certificate for client certificate verification
 
 const app = express();
 app.use(express.json());
@@ -20,13 +19,6 @@ const jwtIssuer = 'telcoexample.com'; // Issuer claim for the JWT
 const e164Regex = /^\+?[1-9]\d{1,14}$/;
 
 app.post('/api/trust-score', (req, res) => {
-  // Extract client certificate
-  const clientCert = req.connection.getPeerCertificate();
-  
-  if (!clientCert || Object.keys(clientCert).length === 0) {
-    return res.status(401).json({ error: 'Unauthorized access - client certificate is required.' });
-  }
-
   // Extract access token from the Authorization header
   const accessToken = req.headers.authorization?.split(' ')[1];
   if (!accessToken) {
@@ -35,16 +27,9 @@ app.post('/api/trust-score', (req, res) => {
 
   try {
     // Verify the access token using the Authorization Server's public key
-    const decodedToken = verifyAccessToken(accessToken); // Make sure this function verifies the JWT signature and checks its validity
+    const decodedToken = verifyToken(accessToken); // Make sure this function verifies the JWT signature and checks its validity
 
-    // Check that the token was issued to the same client
-    const tokenSubject = decodedToken.sub; // This should match a unique client identifier, such as the client certificate's CN or other field
-
-    // For this example, let's assume the token subject matches the client certificate's subject CN
-    if (clientCert.subject.CN !== tokenSubject) {
-      return res.status(401).json({ error: 'Unauthorized access - token subject does not match client certificate.' });
-    }
-
+    // Proceed with further logic, such as validating scopes or claims if necessary
   } catch (err) {
     return res.status(401).json({ error: 'Unauthorized access - invalid token.' });
   }
@@ -77,12 +62,11 @@ app.post('/api/trust-score', (req, res) => {
   res.json({ jwt: signedJwt });
 });
 
+// Create an HTTPS server (no mTLS)
 https.createServer({
   key: serverKey,
   cert: serverCert,
-  ca: caCert,
-  requestCert: true,
-  rejectUnauthorized: true,
+  // No CA or client certificate verification needed
 }, app).listen(4000, () => {
-  console.log('Trust Score API listening on port 4000 with mTLS enabled');
+  console.log('Trust Score API listening on port 4000 without mTLS');
 });

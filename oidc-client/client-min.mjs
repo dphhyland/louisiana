@@ -5,20 +5,18 @@ import { join } from 'path';
 
 (async () => {
 
-  // Define MTLS credentials (client certificate and key)
-  const mtlsClient = new https.Agent({
-    cert: readFileSync(join(process.cwd(), '../certificates/client.crt')),  // Path to your client certificate
-    key: readFileSync(join(process.cwd(), '../certificates/client.key')),    // Path to your client key
-    ca: readFileSync(join(process.cwd(), '../certificates/ca.crt'))         // Path to your CA certificate
+  // Set up the custom agent for HTTPS requests
+  const httpsAgent = new https.Agent({
+    rejectUnauthorized: false // Ignore self-signed certificates for localhost (not recommended in production)
   });
 
-  // Set up the custom agent for mutual TLS
+  // Set custom HTTPS options
   custom.setHttpOptionsDefaults({
-    agent: mtlsClient
+    agent: httpsAgent
   });
 
-  // Discover the issuer's metadata
-  const issuer = await Issuer.discover('https://localhost:3000' );
+  // Discover the issuer's metadata (assuming your authorization server is running at localhost:3000)
+  const issuer = await Issuer.discover('https://localhost:3000');
 
   // Generate a client instance for private_key_jwt
   const client = new issuer.Client({
@@ -38,5 +36,46 @@ import { join } from 'path';
   });
 
   console.log('Access Token:', tokenSet.access_token);
+
+  // Now call the /trust-score API with the access token
+  const requestOptions = {
+    hostname: 'localhost',
+    port: 4000,
+    path: '/api/trust-score',
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${tokenSet.access_token}`,
+      'Content-Type': 'application/json'
+    },
+    agent: httpsAgent, // Use the HTTPS agent
+  };
+
+  // Define the request body (sending a mobile number to the trust-score API)
+  const requestBody = JSON.stringify({
+    mobile_number: '+1234567890' // Example E.164 formatted mobile number
+  });
+
+  const req = https.request(requestOptions, (res) => {
+    let data = '';
+
+    // Collect the data from the response
+    res.on('data', (chunk) => {
+      data += chunk;
+    });
+
+    // Log the complete response when it's done
+    res.on('end', () => {
+      console.log('Response from /trust-score API:', data);
+    });
+  });
+
+  // Handle any errors
+  req.on('error', (error) => {
+    console.error('Error making the request:', error);
+  });
+
+  // Write the request body and end the request
+  req.write(requestBody);
+  req.end();
 
 })();
