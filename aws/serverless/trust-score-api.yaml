@@ -1,0 +1,194 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+
+Description: Serverless application with mock-telco-o Gateway for the Trust Score API.
+
+Parameters:
+  EnvironmentName:
+    Description: Environment name for the application - [dev/staging/production]
+    Type: String
+    AllowedValues:
+      - dev
+      - staging
+      - production
+
+  DomainName:
+    Type: String
+    Description: The name of the domain for the API - this needs to match the name
+      of the Certificate ARN
+
+  OPDomainName:
+    Type: String
+    Default: sandobox.as.trustframeworks.io
+
+  CertificateArn:
+    Type: String
+
+  Route53HostedZoneId:
+    Type: String
+    Default: Z04859113RMVSAYT46EAR
+
+  JwksUri:
+    Type: String
+    Description: The URI of the JWKS endpoint
+
+Conditions:
+  DomainNotEmpty: !Not
+    - !Equals
+      - !Ref DomainName
+      - ''
+
+Resources:
+  ApiGatewayCloudWatchLogsRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - apigateway.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: /
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs
+
+  ApiGatewayAccount:
+    Type: AWS::ApiGateway::Account
+    Properties:
+      CloudWatchRoleArn: !GetAtt ApiGatewayCloudWatchLogsRole.Arn
+
+  ApiLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/API-Gateway/${AWS::StackName}/access-logs
+      RetentionInDays: 7
+
+  TrustScoreFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/api
+      Handler: app.handler
+      Runtime: nodejs18.x
+      Environment:
+        Variables:
+          JWT_ISSUER: !Ref OPDomainName
+
+  JwksAuthorizerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/jwks-authorizer
+      Handler: index.handler
+      Runtime: nodejs18.x
+      Environment:
+        Variables:
+          JWKS_URI: !Ref JwksUri
+
+  MockTelcoGateway:
+    Type: AWS::Serverless::Api
+    DependsOn: ApiGatewayAccount
+    Properties:
+      StageName: !Ref EnvironmentName
+      EndpointConfiguration: REGIONAL
+      DisableExecuteApiEndpoint: true
+      AccessLogSetting:
+        DestinationArn: !GetAtt ApiLogGroup.Arn
+        Format: '{ "requestId":"$context.requestId", "ip": "$context.identity.sourceIp",
+          "caller":"$context.identity.caller", "user":"$context.identity.user",
+          "requestTime":"$context.requestTime",
+          "httpMethod":"$context.httpMethod",
+          "resourcePath":"$context.resourcePath", "status":"$context.status",
+          "protocol":"$context.protocol",
+          "responseLength":"$context.responseLength" }'
+      DefinitionBody:
+        swagger: '2.0'
+        info:
+          title: !Ref AWS::StackName
+        paths:
+          /trust-score:
+            post:
+              x-amazon-apigateway-integration:
+                uri: !Sub arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${TrustScoreFunction.Arn}/invocations
+                passthroughBehavior: when_no_match
+                httpMethod: POST
+                type: aws_proxy
+              security:
+                - JwksAuthorizer: []
+        securityDefinitions:
+          JwksAuthorizer:
+            type: apiKey
+            name: Authorization
+            in: header
+            x-amazon-apigateway-authtype: custom
+            x-amazon-apigateway-authorizer:
+              type: token
+              authorizerUri: !Sub arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${JwksAuthorizerFunction.Arn}/invocations
+              authorizerResultTtlInSeconds: 300
+      Cors:
+        AllowMethods: '''POST,OPTIONS'''
+        AllowHeaders: '''Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'''
+        AllowOrigin: '''*'''
+        MaxAge: '''300'''
+
+  TrustScoreFunctionPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref TrustScoreFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${MockTelcoGateway}/*/*/*
+
+  JwksAuthorizerFunctionPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref JwksAuthorizerFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${MockTelcoGateway}/*/*/*
+
+  # Custom Domain Name Configuration
+  MockTelcoDomainName:
+    Type: AWS::ApiGateway::DomainName
+    Condition: DomainNotEmpty
+    Properties:
+      DomainName: !Ref DomainName
+      RegionalCertificateArn: !Ref CertificateArn
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
+      SecurityPolicy: TLS_1_2
+
+  MockTelcoDomainNameApiMapping:
+    Type: AWS::ApiGateway::BasePathMapping
+    Condition: DomainNotEmpty
+    DependsOn:
+      - MockTelcoDomainName
+      - MockTelcoGateway
+    Properties:
+      DomainName: !Ref DomainName
+      RestApiId: !Ref MockTelcoGateway
+      Stage: !Ref EnvironmentName
+
+  MockTelcoRecordSet:
+    Type: AWS::Route53::RecordSet
+    Condition: DomainNotEmpty
+    DependsOn: MockTelcoDomainName
+    Properties:
+      HostedZoneId: !Ref Route53HostedZoneId
+      Name: !Ref DomainName
+      Type: A
+      AliasTarget:
+        DNSName: !GetAtt MockTelcoDomainName.RegionalDomainName
+        HostedZoneId: !GetAtt MockTelcoDomainName.RegionalHostedZoneId
+
+Outputs:
+  MockTelcoGatewayURL:
+    Description: URL for mock-telco-o API Gateway hosting the Trust Score API
+    Value: !Sub https://${MockTelcoGateway}.execute-api.${AWS::Region}.amazonaws.com/${EnvironmentName}/trust-score
+
+  CustomDomainURL:
+    Condition: DomainNotEmpty
+    Description: Custom domain URL for the API
+    Value: !Sub https://${DomainName}/trust-score

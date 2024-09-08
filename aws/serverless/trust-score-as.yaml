@@ -1,0 +1,196 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+
+Description: |
+  Serverless application with OP Gateway for Authorization Server (AS) with mTLS.
+
+Parameters:
+
+  EnvironmentName:
+    Description: Environment name for the application - [dev/staging/production]
+    Type: String
+    AllowedValues:
+      - dev
+      - staging
+      - production
+
+  ECRRepo:
+    Type: String
+    Description: The name of the ECR repository URL without the tag (e.g., 615299729910.dkr.ecr.ap-southeast-2.amazonaws.com/telco-trust-score)
+
+  DomainName:
+    Type: String
+    Description: The name of the domain for the API - this needs to match the name
+      of the Certificate ARN.
+
+  CertificateArn:
+    Type: String
+
+  Route53HostedZoneId:
+    Type: String
+
+Conditions:
+  DomainNotEmpty: !Not
+    - !Equals
+      - !Ref DomainName
+      - ''
+
+Resources:
+
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: LambdaLoggingPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: arn:aws:logs:*:*:*
+
+  ApiGatewayCloudWatchLogsRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - apigateway.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: /
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs
+
+  ApiGatewayAccount:
+    Type: AWS::ApiGateway::Account
+    Properties:
+      CloudWatchRoleArn: !GetAtt ApiGatewayCloudWatchLogsRole.Arn
+
+  ApiLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/API-Gateway/${AWS::StackName}/access-logs
+      RetentionInDays: 7
+
+  OPFunctionV2:
+    Type: AWS::Serverless::Function
+    Properties:
+      PackageType: Image
+      ImageUri: !Sub "${ECRRepo}:latest"
+      Timeout: 900  # Maximum timeout for Lambda (15 mins)
+      MemorySize: 512
+      Role: !GetAtt LambdaExecutionRole.Arn  # Ensure your Lambda role has the necessary permissions
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            Path: /token
+            Method: post   
+
+  OPGateway:
+    Type: AWS::Serverless::Api
+    DependsOn: ApiGatewayAccount
+    Properties:
+      StageName: !Ref EnvironmentName
+      EndpointConfiguration: REGIONAL
+      DisableExecuteApiEndpoint: true
+      AccessLogSetting:
+        DestinationArn: !GetAtt ApiLogGroup.Arn
+        Format: '{ "requestId":"$context.requestId", "ip": "$context.identity.sourceIp",
+          "caller":"$context.identity.caller", "user":"$context.identity.user",
+          "requestTime":"$context.requestTime",
+          "httpMethod":"$context.httpMethod",
+          "resourcePath":"$context.resourcePath", "status":"$context.status",
+          "protocol":"$context.protocol",
+          "responseLength":"$context.responseLength" }'
+      DefinitionBody:
+        swagger: '2.0'
+        info:
+          title: !Ref AWS::StackName
+        paths:
+          /token:
+            post:
+              x-amazon-apigateway-integration:
+                uri: !Sub arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${OPFunctionV2.Arn}/invocations
+                passthroughBehavior: when_no_match
+                httpMethod: POST
+                type: aws_proxy
+          /.well-known/openid-configuration:
+            get:
+              x-amazon-apigateway-integration:
+                uri: !Sub arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${OPFunctionV2.Arn}/invocations
+                passthroughBehavior: when_no_match
+                httpMethod: GET
+                type: aws_proxy
+      Cors:
+        AllowMethods: '''POST,OPTIONS,GET'''
+        AllowHeaders: '''Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'''
+        AllowOrigin: '''*'''
+        MaxAge: '''300'''
+
+  OPFunctionV2Permission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref OPFunctionV2
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${OPGateway}/*/*/*
+
+  OPDomainName:
+    Type: AWS::ApiGateway::DomainName
+    Condition: DomainNotEmpty
+    Properties:
+      DomainName: !Ref DomainName
+      RegionalCertificateArn: !Ref CertificateArn
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
+      SecurityPolicy: TLS_1_2
+      MutualTlsAuthentication:
+        TruststoreUri: !Sub s3://com.trustframeworks/certs/ca.crt
+
+  OPDomainNameApiMapping:
+    Type: AWS::ApiGateway::BasePathMapping
+    Condition: DomainNotEmpty
+    DependsOn:
+      - OPDomainName
+      - OPGateway
+    Properties:
+      DomainName: !Ref DomainName
+      RestApiId: !Ref OPGateway
+      Stage: !Ref EnvironmentName
+
+  SandboxASRecordSet:
+    Type: AWS::Route53::RecordSet
+    Condition: DomainNotEmpty
+    DependsOn: OPDomainName
+    Properties:
+      HostedZoneId: !Ref Route53HostedZoneId
+      Name: !Ref DomainName
+      Type: A
+      AliasTarget:
+        DNSName: !GetAtt OPDomainName.RegionalDomainName
+        HostedZoneId: !GetAtt OPDomainName.RegionalHostedZoneId
+
+Outputs:
+  OPGatewayURL:
+    Description: URL for OpenID Provider API Gateway (mTLS enabled)
+    Value: !Sub https://sandbox.as.trustframeworks.io/Prod
+
+  LambdaApiUrl:
+    Description: "API Gateway endpoint URL for Prod stage"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/lambda"

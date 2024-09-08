@@ -1,0 +1,1 @@
+sam deploy --template-file ../trust-score-api.yaml --stack-name trust-scopre-api --capabilities CAPABILITY_IAM --parameter-overrides EnvironmentName=dev JwksUri=https://sandbox.as.trustframeworks.io/.well-known/openid-configuration DomainName=mock-telco-o.api.trustframeworks.io CertificateArn=arn:aws:acm:ap-southeast-2:615299729910:certificate/9f2a8df4-841c-46c9-b585-84f09afc8613
