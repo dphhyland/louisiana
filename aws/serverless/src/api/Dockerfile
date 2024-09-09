@@ -1,25 +1,19 @@
-# Use an official Node.js runtime as a parent image
-FROM node:18
+FROM golang:1.22
+WORKDIR /app
+# Download Go modules
 
-# Set the working directory
-WORKDIR /usr/src/app
+COPY go.mod ./
+# Copy the entrypoint script into the container
+# COPY entrypoint.sh ./
+# Copy the source code. Note the slash at the end, as explained in
+# https://docs.docker.com/reference/dockerfile/#copy
+COPY *.go ./
+COPY config.json ./
+RUN CGO_ENABLED=0 GOOS=linux go build -o /api_go
+# Make the entrypoint script executable
+# RUN chmod +x ./entrypoint.sh
+EXPOSE 8080
 
-# Copy package.json and package-lock.json to the working directory
-COPY ./package*.json ./
-
-# Install any needed dependencies
-RUN npm install
-
-# Copy the rest of the application code to the working directory
-COPY . .
-
-COPY ./certificates/ ./certificates/
-
-# Expose the ports for the OIDC provider and the Trust Score API
-EXPOSE 3000 4000
-
-# Use a process manager to run both services concurrently (like PM2 or npm-run-all)
-RUN npm install -g pm2
-
-# Start both the OIDC provider and API server using PM2
-CMD ["pm2-runtime", "src/index.mjs"]
+# ENTRYPOINT ["./entrypoint.sh"]
+# Run
+CMD ["/api_go"]

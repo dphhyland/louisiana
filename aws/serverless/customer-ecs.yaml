@@ -11,6 +11,14 @@ Parameters:
     Description: Name of VPC stack to build off of
     Default: vpc-stack
 
+  DomainName:
+    Type: String
+    Description: The domain name for the service (e.g., trustframeworks.io)
+
+  Route53HostedZoneId:
+    Type: String
+    Description: The Route 53 Hosted Zone ID for the domain
+
 Resources:
 
   EcsCluster:
@@ -19,40 +27,32 @@ Resources:
       ClusterName: !Sub ${AWS::StackName}-Cluster
 
   DefaultSecurityGroup:
-      Type: AWS::EC2::SecurityGroup
-      Properties:
-          GroupDescription: Allow http to client host
-          VpcId:
-            Fn::ImportValue: !Sub ${VpcStack}-vpc-id
-          SecurityGroupIngress:
-          - IpProtocol: tcp
-            FromPort: 80
-            ToPort: 80
-            CidrIp: 0.0.0.0/0
-          - IpProtocol: tcp
-            FromPort: 8080
-            ToPort: 8080
-            CidrIp: 0.0.0.0/0
-          - IpProtocol: tcp
-            FromPort: 443
-            ToPort: 443
-            CidrIp: 0.0.0.0/0
-          SecurityGroupEgress:
-          - IpProtocol: tcp
-            FromPort: 80
-            ToPort: 80
-            CidrIp: 0.0.0.0/0
-          - IpProtocol: tcp
-            FromPort: 8080
-            ToPort: 8080
-            CidrIp: 0.0.0.0/0
-          - IpProtocol: tcp
-            FromPort: 443
-            ToPort: 443
-            CidrIp: 0.0.0.0/0
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow http to client host
+      VpcId: !ImportValue
+        Fn::Sub: ${VpcStack}-vpc-id
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
 
   DefaultRole:
-    Type: 'AWS::IAM::Role'
+    Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
         Version: 2012-10-17
@@ -60,17 +60,17 @@ Resources:
           - Effect: Allow
             Principal:
               Service:
-              - ec2.amazonaws.com
-              - ecs.amazonaws.com
-              - ecs-tasks.amazonaws.com
+                - ec2.amazonaws.com
+                - ecs.amazonaws.com
+                - ecs-tasks.amazonaws.com
             Action:
-              - 'sts:AssumeRole'
+              - sts:AssumeRole
       Path: /
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
         - arn:aws:iam::aws:policy/AmazonECS_FullAccess
 
-  ApplicationLoadBalancer:
+  NetworkLoadBalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
       IpAddressType: ipv4
@@ -78,12 +78,24 @@ Resources:
       SecurityGroups:
         - !Ref DefaultSecurityGroup
       Subnets:
-        - Fn::ImportValue: !Sub ${VpcStack}-public-subnet-1-id
-        - Fn::ImportValue: !Sub ${VpcStack}-public-subnet-2-id
-      Type: application
+        - !ImportValue
+          Fn::Sub: ${VpcStack}-public-subnet-1-id
+        - !ImportValue
+          Fn::Sub: ${VpcStack}-public-subnet-2-id
+      Type: network
 
+  Route53RecordSet:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref Route53HostedZoneId # Your Route 53 Hosted Zone ID
+      Name: !Ref DomainName # The domain name (e.g., trustframeworks.io)
+      Type: A # Alias record for IPv4
+      AliasTarget:
+        DNSName: !GetAtt NetworkLoadBalancer.DNSName # NLB DNS name
+        HostedZoneId: !GetAtt NetworkLoadBalancer.CanonicalHostedZoneID # Hosted zone ID for the NLB
 
 Outputs:
+
   EcsClusterExport:
     Description: A reference to the created ECS Cluster
     Value: !Ref EcsCluster
@@ -102,14 +114,14 @@ Outputs:
     Export:
       Name: !Sub ${AWS::StackName}-default-role
 
-  ApplicationLoadBalancerArnExport:
-    Description: A reference to the created ALB
-    Value: !Ref ApplicationLoadBalancer
+  NetworkLoadBalancerArnExport:
+    Description: A reference to the created NLB
+    Value: !Ref NetworkLoadBalancer
     Export:
-      Name: !Sub ${AWS::StackName}-alb-arn
+      Name: !Sub ${AWS::StackName}-nlb-arn
 
-  ApplicationLoadBalancerDNSNameExport:
+  NetworkLoadBalancerDNSNameExport:
     Description: The DNS name of the Application Load Balancer
-    Value: !GetAtt ApplicationLoadBalancer.DNSName
+    Value: !GetAtt NetworkLoadBalancer.DNSName
     Export:
-      Name: !Sub ${AWS::StackName}-alb-dns-name
+      Name: !Sub ${AWS::StackName}-nlb-dns-name

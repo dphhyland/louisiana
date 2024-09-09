@@ -16,46 +16,51 @@ Parameters:
     Description: Name of ECS Cluster stack to build off of
     Default: ecs-cluster-stack
 
-  Image:
+  MTLSImage:
     Type: String
     Description: URI of image you would like to use
 
-  ContainerName:  
-    Type: String 
+  OPImage:
+    Type: String
+    Description: URI of image you would like to use
 
+  APIImage:
+    Type: String
+    Description: URI of image you would like to use
+
+  MongoImage:
+    Type: String
 
 Resources:
 
-  TargetGroup:
+  MTLSTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
-      HealthCheckEnabled: true
-      HealthCheckIntervalSeconds: 30 # How often to perform the health check
-      HealthCheckPort: 8080
-      HealthCheckProtocol: HTTPS
-      HealthCheckPath: /health # Specify the endpoint for the health check
-      HealthCheckTimeoutSeconds: 5 # Time to wait for a response
-      HealthyThresholdCount: 2 # Number of successful checks before the instance is considered healthy
-      UnhealthyThresholdCount: 3 # Number of failed checks before marking the instance as unhealthy
-      Port: 8080
-      Protocol: HTTPS
+      HealthCheckProtocol: TCP 
+      HealthCheckPort: traffic-port
+      HealthCheckIntervalSeconds: 30
+      HealthCheckTimeoutSeconds: 10
+      HealthyThresholdCount: 3
+      UnhealthyThresholdCount: 3
       TargetType: ip
+      Port: 443
+      Protocol: TCP
       VpcId:
         Fn::ImportValue: !Sub ${VpcStack}-vpc-id
 
-  Listener:
+  MTLSListener:
     Type: AWS::ElasticLoadBalancingV2::Listener
     Properties:
       DefaultActions:
         - Order: 1
-          TargetGroupArn: !Ref TargetGroup
+          TargetGroupArn: !Ref MTLSTargetGroup
           Type: forward
       LoadBalancerArn:
-        Fn::ImportValue: !Sub ${EcsClusterStack}-alb-arn
-      Port: 8080
-      Protocol: HTTP
+        Fn::ImportValue: !Sub ${EcsClusterStack}-nlb-arn
+      Port: 443
+      Protocol: TCP
     DependsOn:
-      - TargetGroup
+      - MTLSTargetGroup
 
   FargateService:
     Type: AWS::ECS::Service
@@ -68,53 +73,89 @@ Resources:
       HealthCheckGracePeriodSeconds: 60
       LaunchType: FARGATE
       LoadBalancers:
-        -
-          ContainerName: !Sub ${ContainerName}
-          ContainerPort: 8080
-          TargetGroupArn: !Ref TargetGroup
+        - ContainerName: MTLSContainer
+          ContainerPort: 443
+          TargetGroupArn: !Ref MTLSTargetGroup
       NetworkConfiguration:
           AwsvpcConfiguration:
             SecurityGroups:
-              -
-                Fn::ImportValue: !Sub ${EcsClusterStack}-default-security-group
+              - Fn::ImportValue: !Sub ${EcsClusterStack}-default-security-group
             Subnets:
-              -
-                Fn::ImportValue: !Sub ${VpcStack}-private-subnet-a-id
-              -
-                Fn::ImportValue: !Sub ${VpcStack}-private-subnet-b-id
-      TaskDefinition: !Ref FargateServiceTaskDefinition
+              - Fn::ImportValue: !Sub ${VpcStack}-private-subnet-a-id
+              - Fn::ImportValue: !Sub ${VpcStack}-private-subnet-b-id
+      TaskDefinition: !Ref TaskDefinition
 
   FargateServiceLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
       RetentionInDays: 7
 
-  FargateServiceTaskDefinition:
+  TaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
       ContainerDefinitions:
-        -
-          Name: !Sub ${ContainerName}
+        - Name: MTLSContainer
           Essential: true
-          Image: !Ref Image
+          Image: !Ref MTLSImage
           LogConfiguration:
               LogDriver: awslogs
               Options:
                 awslogs-group: !Ref FargateServiceLogGroup
-                awslogs-stream-prefix: !Sub ${ContainerName}-container 
+                awslogs-stream-prefix: mtls-container 
                 awslogs-region: !Ref AWS::Region
           PortMappings:
-            -
-              ContainerPort: 8080
+            - ContainerPort: 443
+              HostPort: 443
+              Protocol: tcp
+          Environment:
+            - Name: PORT
+              Value: "443" 
+        - Name: OPContainer
+          Essential: true
+          Image: !Ref OPImage
+          LogConfiguration:
+              LogDriver: awslogs
+              Options:
+                awslogs-group: !Ref FargateServiceLogGroup
+                awslogs-stream-prefix: op-container 
+                awslogs-region: !Ref AWS::Region
+          PortMappings:
+            - ContainerPort: 3000
+              HostPort: 3000
+              Protocol: tcp
+        - Name: APIContainer
+          Essential: true
+          Image: !Ref APIImage
+          LogConfiguration:
+              LogDriver: awslogs
+              Options:
+                awslogs-group: !Ref FargateServiceLogGroup
+                awslogs-stream-prefix: api-container 
+                awslogs-region: !Ref AWS::Region
+          PortMappings:
+            - ContainerPort: 8080
               HostPort: 8080
               Protocol: tcp
           Environment:
             - Name: PORT
               Value: "8080" 
-      Cpu: '256'
+        - Name: MongoContainer
+          Essential: true
+          Image: !Ref MongoImage
+          LogConfiguration:
+              LogDriver: awslogs
+              Options:
+                awslogs-group: !Ref FargateServiceLogGroup
+                awslogs-stream-prefix: api-container 
+                awslogs-region: !Ref AWS::Region
+          PortMappings:
+            - ContainerPort: 27017
+              HostPort: 27017
+              Protocol: tcp
+      Cpu: '512'
       ExecutionRoleArn:
         Fn::ImportValue: !Sub ${EcsClusterStack}-default-role
-      Memory: '512'
+      Memory: '2048'
       NetworkMode: awsvpc
       RequiresCompatibilities:
         -  FARGATE

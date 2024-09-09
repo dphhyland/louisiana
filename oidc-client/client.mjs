@@ -5,7 +5,6 @@ import { fileURLToPath } from 'url';
 import { Issuer, custom } from 'openid-client';
 import dotenv from 'dotenv';
 
-
 dotenv.config();
 
 // Correctly set up __filename and __dirname for ES modules
@@ -13,35 +12,33 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Load client certificate, key, and CA certificate
-const clientCert = fs.readFileSync(path.join(__dirname, '../certificates/client.crt'));
-const clientKey = fs.readFileSync(path.join(__dirname, '../certificates/client.key'));
-const caCert = fs.readFileSync(path.join(__dirname, '../certificates/ca.crt'));
+const clientCert = fs.readFileSync(path.join(__dirname, './certificates/client.crt'));
+const clientKey = fs.readFileSync(path.join(__dirname, './certificates/client.key'));
+const caCert = fs.readFileSync(path.join(__dirname, './certificates/ca.crt'));
 
 // Load the private key JWK from your file
-const jwks = JSON.parse(fs.readFileSync(path.join(__dirname, '../certificates/client.jwks.json'), 'utf8'));
+const jwks = JSON.parse(fs.readFileSync(path.join(__dirname, './certificates/client.jwks.json'), 'utf8'));
 
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
-process.env.NODE_DEBUG = 'tls';
 
-// Create an HTTPS agent for mTLS (rejectUnauthorized should be true in production)
 const httpsAgent = new https.Agent({
   cert: clientCert,
   key: clientKey,
-  ca: caCert,
-  rejectUnauthorized: false,
-  minVersion: 'TLSv1.2',
-  timeout: 5000, // Set a timeout of 5 seconds
+  rejectUnauthorized: true,  
 });
 
 async function discoverAndAuthenticate() {
   try {
-    const issuerUrl = `https://localhost:${process.env.PORT || 3000}`;
+    console.log('Discovering issuer...');
+    console.log('Issuer metadata:', jwks);
+    const issuerUrl = `https://sandbox.as.trustframeworks.io`;
 
     // Discover the issuer configuration from the .well-known endpoint
     const issuer = await Issuer.discover(issuerUrl, {
       agent: httpsAgent,
     });
     console.log('Discovered issuer:', issuer.issuer);
+
+
 
     // Initialize the client with private_key_jwt authentication
     const client = new issuer.Client({

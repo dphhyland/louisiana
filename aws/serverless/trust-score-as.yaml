@@ -91,6 +91,11 @@ Resources:
                 passthroughBehavior: when_no_match
                 httpMethod: POST
                 type: http_proxy
+                requestParameters:
+                  integration.request.header.X-Real-IP: "context.identity.sourceIp"
+                  integration.request.header.X-Forwarded-For: "context.identity.sourceIp"
+                  integration.request.header.X-Forwarded-Proto: "context.protocol"
+                  integration.request.header.X-Forwarded-Host: "context.domainName"
           /.well-known/openid-configuration:
             get:
               x-amazon-apigateway-integration:
@@ -98,6 +103,11 @@ Resources:
                 passthroughBehavior: when_no_match
                 httpMethod: GET
                 type: http_proxy
+                requestParameters:
+                  integration.request.header.X-Real-IP: "context.identity.sourceIp"
+                  integration.request.header.X-Forwarded-For: "context.identity.sourceIp"
+                  integration.request.header.X-Forwarded-Proto: "context.protocol"
+                  integration.request.header.X-Forwarded-Host: "context.domainName"
           /jwks:
             get:
               x-amazon-apigateway-integration:
@@ -105,6 +115,11 @@ Resources:
                 passthroughBehavior: when_no_match
                 httpMethod: GET
                 type: http_proxy
+                requestParameters:
+                  integration.request.header.X-Real-IP: "context.identity.sourceIp"
+                  integration.request.header.X-Forwarded-For: "context.identity.sourceIp"
+                  integration.request.header.X-Forwarded-Proto: "context.protocol"
+                  integration.request.header.X-Forwarded-Host: "context.domainName"
       Cors:
         AllowMethods: '''POST,OPTIONS,GET'''
         AllowHeaders: '''Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'''

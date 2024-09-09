@@ -1,0 +1,19 @@
+{
+    "threat_metrics": {
+      "1234567890": {
+        "daysActive": 1825,
+        "simSwap": true,
+        "fraudReported": true
+      },
+      "0987654321": {
+        "daysActive": 180,
+        "simSwap": false,
+        "fraudReported": false
+      },
+      "1122334455": {
+        "daysActive": 1095,
+        "simSwap": false,
+        "fraudReported": true
+      }
+    }
+  }

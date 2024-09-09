@@ -21,10 +21,12 @@ const serverOptions = {
   cert: fs.readFileSync(path.join(__dirname, './certificates/server.crt')),
   ca: fs.readFileSync(path.join(__dirname, './certificates/ca.crt')),
   requestCert: false,
-  rejectUnauthorized: false, // Don't reject unauthorized clients
+  rejectUnauthorized: false,
 };
 
-const oidc = new Provider(`http://localhost:${process.env.PORT || 3000}`, oidcConfiguration);
+const oidc = new Provider(`https://sandbox.as.trustframeworks.io`, oidcConfiguration);
+
+oidc.proxy = true;
 
 // Middleware to handle health check on root `/`
 oidc.use(async (ctx, next) => {

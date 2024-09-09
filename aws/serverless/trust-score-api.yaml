@@ -92,12 +92,13 @@ Resources:
   TrustScoreFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: src/api
+      CodeUri: src/mobile-number-check
       Handler: app.handler
       Runtime: nodejs18.x
       Environment:
         Variables:
-          JWT_ISSUER: !Ref OPDomainName
+          ISSUER: !Ref OPDomainName
+          PORT: 4000
 
   JwksAuthorizerFunction:
     Type: AWS::Serverless::Function
