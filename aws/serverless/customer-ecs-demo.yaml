@@ -9,12 +9,10 @@ Parameters:
   VpcStack:
     Type: String
     Description: Name of VPC stack to build off of
-    Default: vpc-stack
 
-  EcsClusterStack:
+  EndpointStack:
     Type: String
     Description: Name of ECS Cluster stack to build off of
-    Default: ecs-cluster-stack
 
   MTLSImage:
     Type: String
@@ -32,6 +30,30 @@ Parameters:
     Type: String
 
 Resources:
+
+  EcsCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: !Sub ${AWS::StackName}-Cluster
+
+  DefaultRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+                - ecs.amazonaws.com
+                - ecs-tasks.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: /
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+        - arn:aws:iam::aws:policy/AmazonECS_FullAccess
 
   MTLSTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
@@ -56,7 +78,7 @@ Resources:
           TargetGroupArn: !Ref MTLSTargetGroup
           Type: forward
       LoadBalancerArn:
-        Fn::ImportValue: !Sub ${EcsClusterStack}-nlb-arn
+        Fn::ImportValue: !Sub ${EndpointStack}-nlb-arn
       Port: 443
       Protocol: TCP
     DependsOn:
@@ -65,8 +87,7 @@ Resources:
   FargateService:
     Type: AWS::ECS::Service
     Properties:
-      Cluster:
-        Fn::ImportValue: !Sub ${EcsClusterStack}-ecs-cluster
+      Cluster: !Ref EcsCluster
       DeploymentController:
         Type: ECS
       DesiredCount: 1
@@ -79,10 +100,9 @@ Resources:
       NetworkConfiguration:
           AwsvpcConfiguration:
             SecurityGroups:
-              - Fn::ImportValue: !Sub ${EcsClusterStack}-default-security-group
+              - Fn::ImportValue: !Sub ${EndpointStack}-default-security-group
             Subnets:
-              - Fn::ImportValue: !Sub ${VpcStack}-private-subnet-a-id
-              - Fn::ImportValue: !Sub ${VpcStack}-private-subnet-b-id
+              - Fn::ImportValue: !Sub ${VpcStack}-public-subnet-1-id
       TaskDefinition: !Ref TaskDefinition
 
   FargateServiceLogGroup:
@@ -153,14 +173,12 @@ Resources:
               HostPort: 27017
               Protocol: tcp
       Cpu: '512'
-      ExecutionRoleArn:
-        Fn::ImportValue: !Sub ${EcsClusterStack}-default-role
+      ExecutionRoleArn: !Ref DefaultRole
       Memory: '2048'
       NetworkMode: awsvpc
       RequiresCompatibilities:
         -  FARGATE
-      TaskRoleArn:
-        Fn::ImportValue: !Sub ${EcsClusterStack}-default-role
+      TaskRoleArn: !Ref DefaultRole
 
 Outputs:
   FargateServiceName:

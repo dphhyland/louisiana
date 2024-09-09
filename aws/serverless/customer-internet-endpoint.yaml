@@ -21,11 +21,6 @@ Parameters:
 
 Resources:
 
-  EcsCluster:
-    Type: AWS::ECS::Cluster
-    Properties:
-      ClusterName: !Sub ${AWS::StackName}-Cluster
-
   DefaultSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -51,25 +46,6 @@ Resources:
           ToPort: 443
           CidrIp: 0.0.0.0/0
 
-  DefaultRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: 2012-10-17
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service:
-                - ec2.amazonaws.com
-                - ecs.amazonaws.com
-                - ecs-tasks.amazonaws.com
-            Action:
-              - sts:AssumeRole
-      Path: /
-      ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
-        - arn:aws:iam::aws:policy/AmazonECS_FullAccess
-
   NetworkLoadBalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
@@ -80,8 +56,6 @@ Resources:
       Subnets:
         - !ImportValue
           Fn::Sub: ${VpcStack}-public-subnet-1-id
-        - !ImportValue
-          Fn::Sub: ${VpcStack}-public-subnet-2-id
       Type: network
 
   Route53RecordSet:
@@ -96,23 +70,11 @@ Resources:
 
 Outputs:
 
-  EcsClusterExport:
-    Description: A reference to the created ECS Cluster
-    Value: !Ref EcsCluster
-    Export:
-      Name: !Sub ${AWS::StackName}-ecs-cluster
-
   DefaultSecurityGroupExport:
     Description: A reference to the created SG
     Value: !Ref DefaultSecurityGroup
     Export:
       Name: !Sub ${AWS::StackName}-default-security-group
-
-  DefaultRoleExport:
-    Description: A reference to the created IAM Role
-    Value: !Ref DefaultRole
-    Export:
-      Name: !Sub ${AWS::StackName}-default-role
 
   NetworkLoadBalancerArnExport:
     Description: A reference to the created NLB

@@ -1,6 +1,6 @@
 sam deploy \
-  --template-file ../customer-ecs.yaml \
-  --stack-name demo-ecs \
+  --template-file ../customer-internet-endpoint.yaml \
+  --stack-name demo-internet-endpoint \
   --capabilities CAPABILITY_IAM \
   --parameter-overrides Customer=demo VpcStack=demo-vpc \
   DomainName=sandbox.as.trustframeworks.io \
