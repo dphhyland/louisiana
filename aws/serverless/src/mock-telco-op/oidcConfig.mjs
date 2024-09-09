@@ -13,7 +13,7 @@ const clientsPath = path.join(__dirname, 'clients.json');
 const clients = JSON.parse(fs.readFileSync(clientsPath, 'utf8'));
 
 // Load the private key PEM file
-const privateKeyPEM = fs.readFileSync(path.join(__dirname, '../certificates/server.key'), 'utf8');
+const privateKeyPEM = fs.readFileSync(path.join(__dirname, './certificates/server.key'), 'utf8');
 
 // Asynchronously generate JWKS
 async function generateJwks() {

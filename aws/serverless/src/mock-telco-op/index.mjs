@@ -17,14 +17,24 @@ dotenv.config();
 
 // Load SSL certificates
 const serverOptions = {
-  key: fs.readFileSync(path.join(__dirname, '../certificates/server.key')),
-  cert: fs.readFileSync(path.join(__dirname, '../certificates/server.crt')),
-  ca: fs.readFileSync(path.join(__dirname, '../certificates/ca.crt')),
-  requestCert: true,
+  key: fs.readFileSync(path.join(__dirname, './certificates/server.key')),
+  cert: fs.readFileSync(path.join(__dirname, './certificates/server.crt')),
+  ca: fs.readFileSync(path.join(__dirname, './certificates/ca.crt')),
+  requestCert: false,
   rejectUnauthorized: false, // Don't reject unauthorized clients
 };
 
-const oidc = new Provider(`https://localhost:${process.env.PORT || 3000}`, oidcConfiguration);
+const oidc = new Provider(`http://localhost:${process.env.PORT || 3000}`, oidcConfiguration);
+
+// Middleware to handle health check on root `/`
+oidc.use(async (ctx, next) => {
+  if (ctx.path === '/health') {
+    ctx.status = 200;
+    ctx.body = 'OK';
+    return;
+  }
+  await next();
+});
 
 // Middleware to log all requests
 oidc.use(async (ctx, next) => {

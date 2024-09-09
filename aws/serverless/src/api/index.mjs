@@ -20,21 +20,21 @@ const e164Regex = /^\+?[1-9]\d{1,14}$/;
 
 app.post('/api/trust-score', (req, res) => {
   // Extract access token from the Authorization header
-  const accessToken = req.headers.authorization?.split(' ')[1];
-  if (!accessToken) {
-    return res.status(401).json({ error: 'Unauthorized access - missing access token.' });
-  }
+  // const accessToken = req.headers.authorization?.split(' ')[1];
+  // if (!accessToken) {
+  //   return res.status(401).json({ error: 'Unauthorized access - missing access token.' });
+  // }
 
-  try {
-    // Verify the access token using the Authorization Server's public key
-    const decodedToken = verifyToken(accessToken); // Make sure this function verifies the JWT signature and checks its validity
+  // try {
+  //   // Verify the access token using the Authorization Server's public key
+  //   const decodedToken = verifyToken(accessToken); // Make sure this function verifies the JWT signature and checks its validity
 
-    // Proceed with further logic, such as validating scopes or claims if necessary
-  } catch (err) {
-    return res.status(401).json({ error: 'Unauthorized access - invalid token.' });
-  }
+  // } catch (err) {
+  //   return res.status(401).json({ error: 'Unauthorized access - invalid token.' });
+  // }
 
   const { mobile_number } = req.body;
+
   if (!mobile_number) {
     return res.status(400).json({ error: 'Mobile number is required.' });
   }
@@ -67,6 +67,6 @@ https.createServer({
   key: serverKey,
   cert: serverCert,
   // No CA or client certificate verification needed
-}, app).listen(4000, () => {
+}, app).listen(3000, () => {
   console.log('Trust Score API listening on port 4000 without mTLS');
 });
