@@ -1,0 +1,154 @@
+{
+    "threat_metrics": {
+        "61413085539": {
+            "daysActive": 33,
+            "simSwap": true,
+            "fraudReported": false
+        },
+        "61470936307": {
+            "daysActive": 348,
+            "simSwap": true,
+            "fraudReported": true
+        },
+        "61452021505": {
+            "daysActive": 65,
+            "simSwap": false,
+            "fraudReported": false
+        },
+        "61498728647": {
+            "daysActive": 283,
+            "simSwap": false,
+            "fraudReported": false
+        },
+        "61446041423": {
+            "daysActive": 136,
+            "simSwap": false,
+            "fraudReported": true
+        },
+        "61479860564": {
+            "daysActive": 50,
+            "simSwap": false,
+            "fraudReported": false
+        },
+        "61437912035": {
+            "daysActive": 122,
+            "simSwap": false,
+            "fraudReported": true
+        },
+        "61478283090": {
+            "daysActive": 69,
+            "simSwap": false,
+            "fraudReported": true
+        },
+        "61479457704": {
+            "daysActive": 54,
+            "simSwap": false,
+            "fraudReported": true
+        },
+        "61468139049": {
+            "daysActive": 51,
+            "simSwap": false,
+            "fraudReported": false
+        },
+        "61414338842": {
+            "daysActive": 195,
+            "simSwap": true,
+            "fraudReported": false
+        },
+        "61478085215": {
+            "daysActive": 151,
+            "simSwap": false,
+            "fraudReported": false
+        },
+        "61479828919": {
+            "daysActive": 98,
+            "simSwap": true,
+            "fraudReported": true
+        },
+        "61409504637": {
+            "daysActive": 51,
+            "simSwap": false,
+            "fraudReported": true
+        },
+        "61443631576": {
+            "daysActive": 198,
+            "simSwap": true,
+            "fraudReported": false
+        },
+        "61400335323": {
+            "daysActive": 110,
+            "simSwap": false,
+            "fraudReported": false
+        },
+        "61489299388": {
+            "daysActive": 181,
+            "simSwap": true,
+            "fraudReported": false
+        },
+        "61419106258": {
+            "daysActive": 10,
+            "simSwap": true,
+            "fraudReported": false
+        },
+        "61468876039": {
+            "daysActive": 7,
+            "simSwap": false,
+            "fraudReported": true
+        },
+        "61429353777": {
+            "daysActive": 208,
+            "simSwap": false,
+            "fraudReported": true
+        },
+        "61410193516": {
+            "daysActive": 31,
+            "simSwap": true,
+            "fraudReported": true
+        },
+        "61421881720": {
+            "daysActive": 351,
+            "simSwap": false,
+            "fraudReported": false
+        },
+        "61443678350": {
+            "daysActive": 429,
+            "simSwap": false,
+            "fraudReported": true
+        },
+        "61477365982": {
+            "daysActive": 80,
+            "simSwap": false,
+            "fraudReported": true
+        },
+        "61409256351": {
+            "daysActive": 25,
+            "simSwap": false,
+            "fraudReported": false
+        },
+        "61423576210": {
+            "daysActive": 18,
+            "simSwap": false,
+            "fraudReported": true
+        },
+        "61402142318": {
+            "daysActive": 213,
+            "simSwap": false,
+            "fraudReported": true
+        },
+        "61461853043": {
+            "daysActive": 53,
+            "simSwap": true,
+            "fraudReported": true
+        },
+        "61412978990": {
+            "daysActive": 54,
+            "simSwap": true,
+            "fraudReported": true
+        },
+        "61414500303": {
+            "daysActive": 334,
+            "simSwap": true,
+            "fraudReported": false
+        }
+    }
+}

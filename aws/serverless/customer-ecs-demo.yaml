@@ -36,25 +36,6 @@ Resources:
     Properties:
       ClusterName: !Sub ${AWS::StackName}-Cluster
 
-  DefaultRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: 2012-10-17
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service:
-                - ec2.amazonaws.com
-                - ecs.amazonaws.com
-                - ecs-tasks.amazonaws.com
-            Action:
-              - sts:AssumeRole
-      Path: /
-      ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
-        - arn:aws:iam::aws:policy/AmazonECS_FullAccess
-
   MTLSTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
@@ -84,8 +65,17 @@ Resources:
     DependsOn:
       - MTLSTargetGroup
 
+  FargateServiceLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/ecs/${AWS::StackName}'
+      RetentionInDays: 7
+
   FargateService:
     Type: AWS::ECS::Service
+    DependsOn:
+      - MTLSTargetGroup
+      - FargateServiceLogGroup
     Properties:
       Cluster: !Ref EcsCluster
       DeploymentController:
@@ -105,10 +95,45 @@ Resources:
               - Fn::ImportValue: !Sub ${VpcStack}-public-subnet-1-id
       TaskDefinition: !Ref TaskDefinition
 
-  FargateServiceLogGroup:
-    Type: AWS::Logs::LogGroup
+  TaskRole: 
+    Type: AWS::IAM::Role
     Properties:
-      RetentionInDays: 7
+      AssumeRolePolicyDocument:
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: [ecs-tasks.amazonaws.com]
+          Action: ['sts:AssumeRole']
+
+  # This is a role which is used by the ECS tasks themselves.
+  ECSTaskExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: [ecs-tasks.amazonaws.com]
+          Action: ['sts:AssumeRole']
+      Policies:
+        - PolicyName: AmazonECSTaskExecutionRolePolicy
+          PolicyDocument:
+            Statement:
+            - Effect: Allow
+              Action:
+                # Allow the ECS Tasks to download images from ECR
+                - 'ecr:GetAuthorizationToken'
+                - 'ecr:BatchCheckLayerAvailability'
+                - 'ecr:GetDownloadUrlForLayer'
+                - 'ecr:BatchGetImage'
+                - 'logs:CreateLogStream'
+                - 'logs:PutLogEvents'
+              Resource: '*'
+            - Effect: Allow
+              Action:
+                - 'logs:CreateLogStream'
+                - 'logs:PutLogEvents'
+              Resource: !GetAtt FargateServiceLogGroup.Arn
 
   TaskDefinition:
     Type: AWS::ECS::TaskDefinition
@@ -120,6 +145,7 @@ Resources:
           LogConfiguration:
               LogDriver: awslogs
               Options:
+                awslogs-create-group: true
                 awslogs-group: !Ref FargateServiceLogGroup
                 awslogs-stream-prefix: mtls-container 
                 awslogs-region: !Ref AWS::Region
@@ -130,12 +156,37 @@ Resources:
           Environment:
             - Name: PORT
               Value: "443" 
+            - Name: CA_CERT_PATH
+              Value: /app/certs/ca.crt
+            - Name: SERVER_CERT_PATH
+              Value: /app/certs/mtls.crt
+            - Name: SERVER_KEY_PATH
+              Value: /app/certs/mtls.key
+            - Name: AUTH_HOST
+              Value: http://op:3000
+            - Name: API_HOST
+              Value: http://api:8080
+            - Name: EXTERNAL_AUTH_HOST
+              Value: auth.localhost
+            - Name: EXTERNAL_API_HOST
+              Value: api.localhost
+            - Name: CLIENT_ID
+              Value: client
+            - Name: CLIENT_SECRET
+              Value: 12345678
+            - Name: INTROSPECTION_URL
+              Value: http://op:3000/token/introspection
+            - Name: USER_INFO_URL
+              Value: http://op:3000/me
+            - Name: ISSUER
+              Value: https://auth.localhost
         - Name: OPContainer
           Essential: true
           Image: !Ref OPImage
           LogConfiguration:
               LogDriver: awslogs
               Options:
+                awslogs-create-group: true
                 awslogs-group: !Ref FargateServiceLogGroup
                 awslogs-stream-prefix: op-container 
                 awslogs-region: !Ref AWS::Region
@@ -143,12 +194,18 @@ Resources:
             - ContainerPort: 3000
               HostPort: 3000
               Protocol: tcp
+          Environment:
+            - Name: MONGO_URI
+              Value: mongodb://mongo:27017/oidc-provider
+            - Name: DEBUG
+              Value: '*'
         - Name: APIContainer
           Essential: true
           Image: !Ref APIImage
           LogConfiguration:
               LogDriver: awslogs
               Options:
+                awslogs-create-group: true
                 awslogs-group: !Ref FargateServiceLogGroup
                 awslogs-stream-prefix: api-container 
                 awslogs-region: !Ref AWS::Region
@@ -157,29 +214,41 @@ Resources:
               HostPort: 8080
               Protocol: tcp
           Environment:
-            - Name: PORT
-              Value: "8080" 
+            - Name: CONFIG_PATH
+              Value: /app/config.json
+            - Name: API_PATH
+              Value: /au/v1.0/confirmation-of-telephony/threat-score
         - Name: MongoContainer
           Essential: true
           Image: !Ref MongoImage
           LogConfiguration:
               LogDriver: awslogs
               Options:
+                awslogs-create-group: true
                 awslogs-group: !Ref FargateServiceLogGroup
-                awslogs-stream-prefix: api-container 
+                awslogs-stream-prefix: mongo-container 
                 awslogs-region: !Ref AWS::Region
           PortMappings:
             - ContainerPort: 27017
               HostPort: 27017
               Protocol: tcp
       Cpu: '512'
-      ExecutionRoleArn: !Ref DefaultRole
+      ExecutionRoleArn: !Ref ECSTaskExecutionRole
       Memory: '2048'
       NetworkMode: awsvpc
       RequiresCompatibilities:
         -  FARGATE
-      TaskRoleArn: !Ref DefaultRole
+      TaskRoleArn: !Ref TaskRole
 
+  SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow ECS task to access ECR
+      VpcId:  
+        Fn::ImportValue: !Sub ${VpcStack}-vpc-id
+      SecurityGroupEgress:
+        - IpProtocol: -1  
+          CidrIp: 0.0.0.0/0
 Outputs:
   FargateServiceName:
     Description: A reference to the created Fargate Service

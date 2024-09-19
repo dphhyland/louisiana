@@ -1,0 +1,43 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+
+Description: |
+  Serverless application with OP Gateway for Authorization Server (AS) with mTLS and Fargate integration.
+
+Parameters:
+  Customer:
+    Type: String
+    Description: The Customer deployment for the customer. 
+
+  VPC:
+    Type: String 
+
+  PublicSubnet1: 
+    Type: String 
+
+  HostedZoneID: 
+    Type: String 
+
+  DomainName: 
+    Type: String 
+
+Resources:
+
+  NetworkLoadBalancer: 
+
+  TargetGroup: 
+
+  Listener: 
+
+  SecurityGroup: 
+
+  RecordSet:
+    Type: AWS::Route53::RecordSet
+    Condition: DomainNotEmpty
+    Properties:
+      HostedZoneId: !Ref HostedZoneId
+      Name: !Ref DomainName
+      Type: A
+      AliasTarget:
+        DNSName: !GetAtt MockTelcoDomainName.RegionalDomainName
+        HostedZoneId: !GetAtt MockTelcoDomainName.RegionalHostedZoneId

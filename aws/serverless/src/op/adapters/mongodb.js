@@ -126,7 +126,7 @@ class MongoAdapter {
   // This is not part of the required or supported API, all initialization should happen before
   // you pass the adapter to `new Provider`
   static async connect() {
-    const connection = await MongoClient.connect('mongodb://localhost:27017/openid-provider');
+    const connection = await MongoClient.connect(process.env.MONGO_URI);
     DB = connection.db(connection.s.options.dbName);
   }
 }

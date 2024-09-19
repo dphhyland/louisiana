@@ -1,0 +1,286 @@
+{
+    "email_threat_metrics": {
+      "john.doe@example.com": {
+        "daysActive": 1200,
+        "fraudReported": false,
+        "spamFlagged": false,
+        "daysSinceLastUpdate": 2
+      },
+      "jane.smith@gmail.com": {
+        "daysActive": 800,
+        "fraudReported": false,
+        "spamFlagged": false,
+        "daysSinceLastUpdate": 1
+      },
+      "support@paypal.com": {
+        "daysActive": 5000,
+        "fraudReported": false,
+        "spamFlagged": false,
+        "daysSinceLastUpdate": 4
+      },
+      "admin@secure-bank.com": {
+        "daysActive": 300,
+        "fraudReported": true,
+        "spamFlagged": true,
+        "daysSinceLastUpdate": 5
+      },
+      "update@apple-verify.com": {
+        "daysActive": 150,
+        "fraudReported": true,
+        "spamFlagged": true,
+        "daysSinceLastUpdate": 3
+      },
+      "no-reply@amazon.com": {
+        "daysActive": 3500,
+        "fraudReported": false,
+        "spamFlagged": false,
+        "daysSinceLastUpdate": 2
+      },
+      "newsletter@legitnewssite.com": {
+        "daysActive": 2000,
+        "fraudReported": false,
+        "spamFlagged": false,
+        "daysSinceLastUpdate": 7
+      },
+      "info@my-university.edu": {
+        "daysActive": 2500,
+        "fraudReported": false,
+        "spamFlagged": false,
+        "daysSinceLastUpdate": 10
+      },
+      "security@online-banking.net": {
+        "daysActive": 180,
+        "fraudReported": true,
+        "spamFlagged": true,
+        "daysSinceLastUpdate": 1
+      },
+      "contact@fake-research.com": {
+        "daysActive": 90,
+        "fraudReported": true,
+        "spamFlagged": true,
+        "daysSinceLastUpdate": 4
+      },
+      "verify@microsoft.com": {
+        "daysActive": 4000,
+        "fraudReported": false,
+        "spamFlagged": false,
+        "daysSinceLastUpdate": 2
+      },
+      "service@trustedsource.org": {
+        "daysActive": 1700,
+        "fraudReported": false,
+        "spamFlagged": false,
+        "daysSinceLastUpdate": 3
+      },
+      "alerts@safe-banking.com": {
+        "daysActive": 110,
+        "fraudReported": true,
+        "spamFlagged": true,
+        "daysSinceLastUpdate": 2
+      },
+      "admin@fakeupdates.net": {
+        "daysActive": 70,
+        "fraudReported": true,
+        "spamFlagged": true,
+        "daysSinceLastUpdate": 6
+      },
+      "support@legitcompany.com": {
+        "daysActive": 2200,
+        "fraudReported": false,
+        "spamFlagged": false,
+        "daysSinceLastUpdate": 5
+      },
+      "contactus@wellknownsite.com": {
+        "daysActive": 1800,
+        "fraudReported": false,
+        "spamFlagged": false,
+        "daysSinceLastUpdate": 8
+      },
+      "admin@security-warning.com": {
+        "daysActive": 130,
+        "fraudReported": true,
+        "spamFlagged": true,
+        "daysSinceLastUpdate": 1
+      },
+      "news@globalnews.com": {
+        "daysActive": 2900,
+        "fraudReported": false,
+        "spamFlagged": false,
+        "daysSinceLastUpdate": 3
+      },
+      "mail@legitservice.net": {
+        "daysActive": 1600,
+        "fraudReported": false,
+        "spamFlagged": false,
+        "daysSinceLastUpdate": 4
+      },
+      "info@scam-warning.com": {
+        "daysActive": 50,
+        "fraudReported": true,
+        "spamFlagged": true,
+        "daysSinceLastUpdate": 5
+      },
+      "fancy123@gmail.com": {
+        "daysActive": 33,
+        "fraudReported": true,
+        "spamFlagged": false,
+        "daysSinceLastUpdate": 3
+      },
+      "notifications@google.com": {
+        "daysActive": 3000,
+        "fraudReported": false,
+        "spamFlagged": false,
+        "daysSinceLastUpdate": 6
+      },
+      "admin@site-updates.org": {
+        "daysActive": 85,
+        "fraudReported": true,
+        "spamFlagged": true,
+        "daysSinceLastUpdate": 2
+      },
+      "support@netflix.com": {
+        "daysActive": 2500,
+        "fraudReported": false,
+        "spamFlagged": false,
+        "daysSinceLastUpdate": 1
+      },
+      "news@trustedupdates.com": {
+        "daysActive": 1000,
+        "fraudReported": false,
+        "spamFlagged": false,
+        "daysSinceLastUpdate": 3
+      },
+      "support@reputable-site.net": {
+        "daysActive": 900,
+        "fraudReported": false,
+        "spamFlagged": false,
+        "daysSinceLastUpdate": 4
+      },
+      "alerts@security-alert.com": {
+        "daysActive": 60,
+        "fraudReported": true,
+        "spamFlagged": true,
+        "daysSinceLastUpdate": 2
+      },
+      "contact@legitbusiness.com": {
+        "daysActive": 1900,
+        "fraudReported": false,
+        "spamFlagged": false,
+        "daysSinceLastUpdate": 3
+      },
+      "admin@site-protection.com": {
+        "daysActive": 120,
+        "fraudReported": true,
+        "spamFlagged": true,
+        "daysSinceLastUpdate": 5
+      },
+      "newsletter@popularsite.com": {
+        "daysActive": 1400,
+        "fraudReported": false,
+        "spamFlagged": false,
+        "daysSinceLastUpdate": 7
+      },
+      "security@legitnotifications.org": {
+        "daysActive": 1500,
+        "fraudReported": false,
+        "spamFlagged": false,
+        "daysSinceLastUpdate": 2
+      },
+      "support@realsite.com": {
+        "daysActive": 1300,
+        "fraudReported": false,
+        "spamFlagged": false,
+        "daysSinceLastUpdate": 1
+      },
+      "info@fakesupport.net": {
+        "daysActive": 75,
+        "fraudReported": true,
+        "spamFlagged": true,
+        "daysSinceLastUpdate": 3
+      },
+      "contact@realcompany.com": {
+        "daysActive": 2100,
+        "fraudReported": false,
+        "spamFlagged": false,
+        "daysSinceLastUpdate": 4
+      },
+      "admin@scam-alerts.org": {
+        "daysActive": 45,
+        "fraudReported": true,
+        "spamFlagged": true,
+        "daysSinceLastUpdate": 2
+      },
+      "notifications@trustedservice.com": {
+        "daysActive": 1800,
+        "fraudReported": false,
+        "spamFlagged": false,
+        "daysSinceLastUpdate": 5
+      },
+      "alerts@phish-attack.net": {
+        "daysActive": 65,
+        "fraudReported": true,
+        "spamFlagged": true,
+        "daysSinceLastUpdate": 6
+      },
+      "support@knownsource.com": {
+        "daysActive": 1700,
+        "fraudReported": false,
+        "spamFlagged": false,
+        "daysSinceLastUpdate": 3
+      },
+      "info@scam-reports.com": {
+        "daysActive": 35,
+        "fraudReported": true,
+        "spamFlagged": true,
+        "daysSinceLastUpdate": 1
+      },
+      "newsletter@reliable-source.org": {
+        "daysActive": 2000,
+        "fraudReported": false,
+        "spamFlagged": false,
+        "daysSinceLastUpdate": 2
+      },
+      "contactus@realwebsite.net": {
+        "daysActive": 1550,
+        "fraudReported": false,
+        "spamFlagged": false,
+        "daysSinceLastUpdate": 4
+      },
+      "alerts@fakealerts.net": {
+        "daysActive": 55,
+        "fraudReported": true,
+        "spamFlagged": true,
+        "daysSinceLastUpdate": 5
+      },
+      "support@trusted-platform.com": {
+        "daysActive": 2100,
+        "fraudReported": false,
+        "spamFlagged": false,
+        "daysSinceLastUpdate": 7
+      },
+      "info@scam-news.org": {
+        "daysActive": 50,
+        "fraudReported": true,
+        "spamFlagged": true,
+        "daysSinceLastUpdate": 1
+      },
+      "admin@legitupdates.com": {
+        "daysActive": 1750,
+        "fraudReported": false,
+        "spamFlagged": false,
+        "daysSinceLastUpdate": 3
+      },
+      "news@realinfo.com": {
+        "daysActive": 1600,
+        "fraudReported": false,
+        "spamFlagged": false,
+        "daysSinceLastUpdate": 2
+      },
+      "contact@real-site.org": {
+        "daysActive": 1900,
+        "fraudReported": false,
+        "spamFlagged": false,
+        "daysSinceLastUpdate": 4
+      }
+    }
+  }

@@ -18,7 +18,7 @@
         "helmet": "^7.1.0",
         "jsonwebtoken": "^9.0.2",
         "lodash": "^4.17.21",
-        "mongo": "^0.1.0",
+        "mongodb": "^6.8.1",
         "node-cache": "^5.1.2",
         "oidc-provider": "^8.5.1",
         "openid-client": "^5.1.9"

@@ -29,4 +29,4 @@ docker buildx build --platform linux/amd64 -t mock-telco-mtls .
 echo "Running the container..."
 docker run -d -p 7443:443 --name $CONTAINER_NAME mock-telco-mtls
 
-echo "Container $CONTAINER_NAME is running and accessible at https://localhost:8443"
+echo "Container $CONTAINER_NAME is running and accessible at https://localhost:7443"

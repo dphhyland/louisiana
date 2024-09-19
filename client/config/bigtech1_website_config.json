@@ -1,0 +1,254 @@
+{
+  "website_threat_metrics": {
+    "telstra.com": {
+      "daysActive": 3300,
+      "spamFlagged": true,
+      "phishingFlagged": false
+    },
+    "paypal.com": {
+      "daysActive": 8000,
+      "spamFlagged": false,
+      "phishingFlagged": false
+    },
+    "googlesupport.com": {
+      "daysActive": 120,
+      "spamFlagged": true,
+      "phishingFlagged": true
+    },
+    "amazon-offers.net": {
+      "daysActive": 30,
+      "spamFlagged": true,
+      "phishingFlagged": true
+    },
+    "microsoft.com": {
+      "daysActive": 9500,
+      "spamFlagged": false,
+      "phishingFlagged": false
+    },
+    "secure-login.net": {
+      "daysActive": 200,
+      "spamFlagged": true,
+      "phishingFlagged": true
+    },
+    "facebook.com": {
+      "daysActive": 6000,
+      "spamFlagged": false,
+      "phishingFlagged": false
+    },
+    "apple-id-verify.com": {
+      "daysActive": 50,
+      "spamFlagged": true,
+      "phishingFlagged": true
+    },
+    "bankofamerica.com": {
+      "daysActive": 7000,
+      "spamFlagged": false,
+      "phishingFlagged": false
+    },
+    "ebay-security.com": {
+      "daysActive": 100,
+      "spamFlagged": true,
+      "phishingFlagged": true
+    },
+    "citi.com": {
+      "daysActive": 10000,
+      "spamFlagged": false,
+      "phishingFlagged": false
+    },
+    "google.com": {
+      "daysActive": 9500,
+      "spamFlagged": false,
+      "phishingFlagged": false
+    },
+    "netflix.com": {
+      "daysActive": 5000,
+      "spamFlagged": false,
+      "phishingFlagged": false
+    },
+    "amazon-secure-payment.com": {
+      "daysActive": 20,
+      "spamFlagged": true,
+      "phishingFlagged": true
+    },
+    "youtube.com": {
+      "daysActive": 6000,
+      "spamFlagged": false,
+      "phishingFlagged": false
+    },
+    "safebanking.com": {
+      "daysActive": 300,
+      "spamFlagged": true,
+      "phishingFlagged": true
+    },
+    "linkedin.com": {
+      "daysActive": 4000,
+      "spamFlagged": false,
+      "phishingFlagged": false
+    },
+    "appleid-verification.net": {
+      "daysActive": 60,
+      "spamFlagged": true,
+      "phishingFlagged": true
+    },
+    "chase.com": {
+      "daysActive": 8000,
+      "spamFlagged": false,
+      "phishingFlagged": false
+    },
+    "freemoney.xyz": {
+      "daysActive": 10,
+      "spamFlagged": true,
+      "phishingFlagged": true
+    },
+    "secure-payment-verification.com": {
+      "daysActive": 80,
+      "spamFlagged": true,
+      "phishingFlagged": true
+    },
+    "td.com": {
+      "daysActive": 6000,
+      "spamFlagged": false,
+      "phishingFlagged": false
+    },
+    "helpdesk.support": {
+      "daysActive": 150,
+      "spamFlagged": true,
+      "phishingFlagged": true
+    },
+    "paypal-support.net": {
+      "daysActive": 25,
+      "spamFlagged": true,
+      "phishingFlagged": true
+    },
+    "hsbc.com": {
+      "daysActive": 7500,
+      "spamFlagged": false,
+      "phishingFlagged": false
+    },
+    "getrichquick.info": {
+      "daysActive": 15,
+      "spamFlagged": true,
+      "phishingFlagged": true
+    },
+    "secure-banking-login.com": {
+      "daysActive": 90,
+      "spamFlagged": true,
+      "phishingFlagged": true
+    },
+    "wellsfargo.com": {
+      "daysActive": 7000,
+      "spamFlagged": false,
+      "phishingFlagged": false
+    },
+    "suspiciousactivityalert.com": {
+      "daysActive": 60,
+      "spamFlagged": true,
+      "phishingFlagged": true
+    },
+    "amex.com": {
+      "daysActive": 9000,
+      "spamFlagged": false,
+      "phishingFlagged": false
+    },
+    "malicious-alerts.net": {
+      "daysActive": 40,
+      "spamFlagged": true,
+      "phishingFlagged": true
+    },
+    "royalbank.com": {
+      "daysActive": 8000,
+      "spamFlagged": false,
+      "phishingFlagged": false
+    },
+    "instantcreditloan.com": {
+      "daysActive": 20,
+      "spamFlagged": true,
+      "phishingFlagged": true
+    },
+    "secure-payment-alert.com": {
+      "daysActive": 100,
+      "spamFlagged": true,
+      "phishingFlagged": true
+    },
+    "commonwealthbank.com": {
+      "daysActive": 8500,
+      "spamFlagged": false,
+      "phishingFlagged": false
+    },
+    "urgent-security-alert.com": {
+      "daysActive": 30,
+      "spamFlagged": true,
+      "phishingFlagged": true
+    },
+    "santander.com": {
+      "daysActive": 7000,
+      "spamFlagged": false,
+      "phishingFlagged": false
+    },
+    "fakealerts.org": {
+      "daysActive": 20,
+      "spamFlagged": true,
+      "phishingFlagged": true
+    },
+    "citibank.com": {
+      "daysActive": 9500,
+      "spamFlagged": false,
+      "phishingFlagged": false
+    },
+    "fraud-alerts.com": {
+      "daysActive": 50,
+      "spamFlagged": true,
+      "phishingFlagged": true
+    },
+    "deutschebank.com": {
+      "daysActive": 8000,
+      "spamFlagged": false,
+      "phishingFlagged": false
+    },
+    "phishing-alert.net": {
+      "daysActive": 40,
+      "spamFlagged": true,
+      "phishingFlagged": true
+    },
+    "usbank.com": {
+      "daysActive": 9000,
+      "spamFlagged": false,
+      "phishingFlagged": false
+    },
+    "identity-theft-protection.net": {
+      "daysActive": 60,
+      "spamFlagged": true,
+      "phishingFlagged": true
+    },
+    "hsbc-verify.com": {
+      "daysActive": 30,
+      "spamFlagged": true,
+      "phishingFlagged": true
+    },
+    "scotiabank.com": {
+      "daysActive": 8500,
+      "spamFlagged": false,
+      "phishingFlagged": false
+    },
+    "fakebank-login.net": {
+      "daysActive": 20,
+      "spamFlagged": true,
+      "phishingFlagged": true
+    },
+    "standardbank.com": {
+      "daysActive": 7000,
+      "spamFlagged": false,
+      "phishingFlagged": false
+    },
+    "immediatesecurelogin.com": {
+      "daysActive": 25,
+      "spamFlagged": true,
+      "phishingFlagged": true
+    },
+    "phishing-detection.net": {
+      "daysActive": 15,
+      "spamFlagged": true,
+      "phishingFlagged": true
+    }
+  }
+}

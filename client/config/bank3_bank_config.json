@@ -1,0 +1,104 @@
+{
+  "confirmation_of_payee": [
+    {
+      "bsb": "032000",
+      "accountNumber": "65432100",
+      "accountName": "Chris Matthews"
+    },
+    {
+      "bsb": "032000",
+      "accountNumber": "76543210",
+      "accountName": "Anna Russell"
+    },
+    {
+      "bsb": "032001",
+      "accountNumber": "87654321",
+      "accountName": "David Cook"
+    },
+    {
+      "bsb": "032001",
+      "accountNumber": "98765432",
+      "accountName": "Linda Scott"
+    },
+    {
+      "bsb": "032002",
+      "accountNumber": "09876543",
+      "accountName": "Paul Evans"
+    },
+    {
+      "bsb": "032002",
+      "accountNumber": "10987654",
+      "accountName": "Katie Wright"
+    },
+    {
+      "bsb": "032003",
+      "accountNumber": "21098765",
+      "accountName": "Brian Phillips"
+    },
+    {
+      "bsb": "032003",
+      "accountNumber": "32109876",
+      "accountName": "Nancy Edwards"
+    },
+    {
+      "bsb": "032004",
+      "accountNumber": "43210987",
+      "accountName": "Peter Gray"
+    },
+    {
+      "bsb": "032004",
+      "accountNumber": "54321098",
+      "accountName": "Laura Hall"
+    },
+    {
+      "bsb": "032005",
+      "accountNumber": "65432109",
+      "accountName": "Robert Lewis"
+    },
+    {
+      "bsb": "032005",
+      "accountNumber": "76543211",
+      "accountName": "Mary Stewart"
+    },
+    {
+      "bsb": "032006",
+      "accountNumber": "87654322",
+      "accountName": "Daniel Hughes"
+    },
+    {
+      "bsb": "032006",
+      "accountNumber": "98765433",
+      "accountName": "Jessica Moore"
+    },
+    {
+      "bsb": "032007",
+      "accountNumber": "09876544",
+      "accountName": "Luke Clark"
+    },
+    {
+      "bsb": "032007",
+      "accountNumber": "10987655",
+      "accountName": "Victoria Foster"
+    },
+    {
+      "bsb": "032008",
+      "accountNumber": "21098766",
+      "accountName": "Ryan Peterson"
+    },
+    {
+      "bsb": "032008",
+      "accountNumber": "32109877",
+      "accountName": "Julie Murphy"
+    },
+    {
+      "bsb": "032009",
+      "accountNumber": "43210988",
+      "accountName": "Dylan Bell"
+    },
+    {
+      "bsb": "032009",
+      "accountNumber": "54321099",
+      "accountName": "Megan Ward"
+    }
+  ]
+}

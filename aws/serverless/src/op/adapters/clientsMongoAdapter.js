@@ -1,8 +1,8 @@
-// ClientsMongoAdapter.js
-
 import axios from 'axios';
 import jwt from 'jsonwebtoken';
 import MongoAdapter from './mongodb.js'; // Adjust the path as necessary
+
+const FIVE_MINUTES_IN_MS = 5 * 60 * 1000; // 5 minutes in milliseconds
 
 /**
  * Helper function to filter out null values.
@@ -11,11 +11,11 @@ import MongoAdapter from './mongodb.js'; // Adjust the path as necessary
  * @returns {Object} - A new object with only valid (non-null) key-value pairs.
  */
 function filterNullFields(obj) {
-    return Object.fromEntries(
-      Object.entries(obj)
-        .filter(([_, value]) => value !== null) // Filter out only null values
-    );
-  }
+  return Object.fromEntries(
+    Object.entries(obj)
+      .filter(([_, value]) => value !== null) // Filter out only null values
+  );
+}
 
 class ClientsMongoAdapter extends MongoAdapter {
   constructor(name) {
@@ -23,7 +23,7 @@ class ClientsMongoAdapter extends MongoAdapter {
   }
 
   /**
-   * Override the find method to implement find-or-fetch-create logic.
+   * Override the find method to implement find-or-fetch-create logic, including refresh logic.
    *
    * @param {string} _id - The client_id (URI)
    * @returns {Object | undefined} The client payload
@@ -32,21 +32,79 @@ class ClientsMongoAdapter extends MongoAdapter {
     // Step 1: Look up the client in MongoDB
     const existingClient = await super.find(_id);
 
+    // Check if the client exists and needs to be refreshed
+    if (existingClient && this.needsRefresh(existingClient.federationCreationTimestamp)) {
+      console.log(`Refreshing client ${_id} metadata from federation.`);
+      return await this.refreshClient(_id, existingClient);
+    }
+
     if (existingClient) {
       return existingClient;
     }
 
-    // Step 2: Fetch the JWT from the client_id URI
+    // Step 2: Fetch new client metadata if it does not exist
+    return await this.createNewClient(_id);
+  }
+
+  /**
+   * Check if the client needs to be refreshed based on federationCreationTimestamp.
+   *
+   * @param {string} federationCreationTimestamp - The timestamp when the client was last fetched.
+   * @returns {boolean} - Returns true if the client needs to be refreshed.
+   */
+  needsRefresh(federationCreationTimestamp) {
+    const now = new Date().getTime();
+    const lastUpdated = new Date(federationCreationTimestamp).getTime();
+    return now - lastUpdated > FIVE_MINUTES_IN_MS;
+  }
+
+  /**
+   * Refresh the client metadata from the federation and upsert it into the database.
+   *
+   * @param {string} _id - The client_id (URI)
+   * @param {Object} existingClient - The existing client object
+   * @returns {Object | undefined} The refreshed client object
+   */
+  async refreshClient(_id, existingClient) {
+    // Fetch new metadata from the federation endpoint
+    const newClient = await this.fetchClientMetadata(_id);
+
+    if (!newClient) {
+      console.error(`Failed to refresh client ${_id} from federation.`);
+      return existingClient; // Return existing client if refresh fails
+    }
+
+    // Update federationCreationTimestamp to the current time
+    newClient.federationCreationTimestamp = new Date().toISOString();
+
+    // Upsert the refreshed client into the database
+    try {
+      await this.upsert(_id, newClient);
+    } catch (error) {
+      console.error(`Error updating client ${_id} in DB:`, error);
+      return existingClient; // Return the existing client if the update fails
+    }
+
+    return newClient;
+  }
+
+  /**
+   * Fetch new client metadata from the federation endpoint.
+   *
+   * @param {string} _id - The client_id (URI)
+   * @returns {Object | undefined} The client metadata object
+   */
+  async fetchClientMetadata(_id) {
     let jwtData;
     try {
-        const response = await axios.get(`${_id}/.well-known/openid-federation`);
-        jwtData = response.data; // Assuming the JWT is returned as plain text
+      const response = await axios.get(`${_id}/.well-known/openid-federation`);
+      jwtData = response.data; // Assuming the JWT is returned as plain text
     } catch (error) {
       console.error(`Error fetching JWT from ${_id}:`, error);
       return undefined;
     }
 
-    // Step 3: Decode the JWT to extract client metadata
+    // Decode the JWT to extract client metadata
     let decodedJwt;
     try {
       decodedJwt = jwt.decode(jwtData);
@@ -58,9 +116,6 @@ class ClientsMongoAdapter extends MongoAdapter {
       return undefined;
     }
 
-    // Optional: Verify the JWT signature and claims here
-    // TODO: Add JWT verification using the issuer's public keys if necessary
-
     // Extract the metadata specific to 'openid_relying_party'
     const metadata = decodedJwt.metadata?.openid_relying_party;
     if (!metadata) {
@@ -68,10 +123,29 @@ class ClientsMongoAdapter extends MongoAdapter {
       return undefined;
     }
 
-    // Step 4: Construct the client object based on the federation metadata
-    const newClient = this.constructClientFromMetadata(metadata);
+    // Construct the client object based on the federation metadata
+    return this.constructClientFromMetadata(metadata);
+  }
 
-    // Step 5: Save the client in the database for future use
+  /**
+   * Construct a new client and upsert it into the database.
+   *
+   * @param {string} _id - The client_id (URI)
+   * @returns {Object | undefined} The newly created client object
+   */
+  async createNewClient(_id) {
+    // Fetch new client metadata from the federation
+    const newClient = await this.fetchClientMetadata(_id);
+
+    if (!newClient) {
+      console.error(`Failed to create new client ${_id} from federation.`);
+      return undefined;
+    }
+
+    // Add federationCreationTimestamp to the new client metadata
+    newClient.federationCreationTimestamp = new Date().toISOString();
+
+    // Save the new client in the database
     try {
       await this.upsert(_id, newClient);
     } catch (error) {
@@ -94,7 +168,6 @@ class ClientsMongoAdapter extends MongoAdapter {
 
     const contacts = Array.isArray(metadata.contacts) ? metadata.contacts : [];
     const grant_types = Array.isArray(metadata.grant_types) ? metadata.grant_types : [];
-
 
     // Construct the client object
     const client = {
@@ -123,7 +196,8 @@ class ClientsMongoAdapter extends MongoAdapter {
     }
 
     // Filter out any null values
-    return filterNullFields(client);  }
+    return filterNullFields(client);
+  }
 }
 
 export default ClientsMongoAdapter;

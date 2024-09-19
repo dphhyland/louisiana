@@ -19,6 +19,13 @@ import (
 	"strings"
 )
 
+func getEnv(key, defaultValue string) string {
+	if value, exists := os.LookupEnv(key); exists {
+		return value
+	}
+	return defaultValue
+}
+
 func main() {
 	opts := &slog.HandlerOptions{
 		Level: slog.LevelDebug,
@@ -29,7 +36,14 @@ func main() {
 	log := slog.New(handler)
 	slog.SetDefault(log)
 
-	caBytes, err := os.ReadFile("certs/ca.crt")
+	// Load environment variables with fallbacks
+	caCertPath := getEnv("CA_CERT_PATH", "certs/ca.crt")
+	serverCertPath := getEnv("SERVER_CERT_PATH", "certs/mtls.crt")
+	serverKeyPath := getEnv("SERVER_KEY_PATH", "certs/mtls.key")
+	authHostStr := getEnv("AUTH_HOST", "http://auth.localhost:3000")
+	apiHostStr := getEnv("API_HOST", "http://localhost:8080")
+
+	caBytes, err := os.ReadFile(caCertPath)
 	if err != nil {
 		log.Error("unable to read ca.crt", slog.String("err", err.Error()))
 		os.Exit(1)
@@ -50,7 +64,7 @@ func main() {
 		}
 	}
 
-	serverCertBytes, err := os.ReadFile("certs/mtls.crt")
+	serverCertBytes, err := os.ReadFile(serverCertPath)
 	if err != nil {
 		log.Error("unable to read mtls.crt", slog.String("err", err.Error()))
 		os.Exit(1)
@@ -62,7 +76,7 @@ func main() {
 	}
 	serverBytes := matlsBlock.Bytes
 
-	serverKeyBytes, err := os.ReadFile("certs/mtls.key")
+	serverKeyBytes, err := os.ReadFile(serverKeyPath)
 	if err != nil {
 		log.Error("unable to read mtls.key", slog.String("err", err.Error()))
 		os.Exit(1)
@@ -85,7 +99,7 @@ func main() {
 
 	mux := http.NewServeMux()
 	// Auth Host
-	authHost, err := url.Parse("http://auth.localhost:3000")
+	authHost, err := url.Parse(authHostStr)
 	if err != nil {
 		log.Error("unable to upstream url", slog.String("err", err.Error()))
 		os.Exit(1)
@@ -98,11 +112,18 @@ func main() {
 		setCustomHeaders(req, authHost)
 	}
 
-	mux.Handle("auth.localhost/", accessLogger(log, authProxy))
+	// Ensure the externalAuthHost has a trailing slash
+	externalAuthHost := getEnv("EXTERNAL_AUTH_HOST", "auth.localhost")
+	if !strings.HasSuffix(externalAuthHost, "/") {
+		externalAuthHost = externalAuthHost + "/"
+	}
+
+	// Use path.Join to ensure safe joining
+	mux.Handle(externalAuthHost, accessLogger(log, authProxy))
 
 	// Api Host
 	// apiHost, _ := url.Parse(os.Getenv("API_GATEWAY_URI"))
-	apiHost, _ := url.Parse("http://localhost:8080")
+	apiHost, _ := url.Parse(apiHostStr)
 	if err != nil {
 		log.Error("unable to upstream url", slog.String("err", err.Error()))
 		os.Exit(1)
@@ -117,7 +138,13 @@ func main() {
 	apiProxyHandler := accessLogger(log, apiProxy)
 	apiProxyHandler = enforceAccessTokenMiddleware(apiProxyHandler)
 
-	mux.Handle("api.localhost/", apiProxyHandler)
+	// Ensure the externalAuthHost has a trailing slash
+	internalApiHost := getEnv("INTERNAL_AUTH_HOST", "api.localhost")
+	if !strings.HasSuffix(internalApiHost, "/") {
+		internalApiHost = internalApiHost + "/"
+	}
+
+	mux.Handle(internalApiHost, apiProxyHandler)
 
 	tlsConfig := &tls.Config{
 		Certificates: []tls.Certificate{{
@@ -285,9 +312,10 @@ func getAccessToken(req *http.Request) string {
 }
 
 func introspectAndAddHeaders(req *http.Request, token string) bool {
-	introspectionURL := "http://localhost:3000/token/introspection"
-	clientID := "client"
-	clientSecret := "12345678"
+
+	introspectionURL := getEnv("INTROSPECTION_URL", "http://localhost:3000/token/introspection")
+	clientID := getEnv("CLIENT_ID", "client")
+	clientSecret := getEnv("CLIENT_SECRET", "12345678")
 
 	data := url.Values{}
 	data.Set("token", token)
@@ -356,7 +384,7 @@ func introspectAndAddHeaders(req *http.Request, token string) bool {
 }
 
 func fetchAndAddUserInfo(req *http.Request, token string) {
-	userInfoURL := "http://auth/me"
+	userInfoURL := getEnv("USER_INFO_URL", "http://auth/me")
 
 	client := &http.Client{}
 	userInfoReq, err := http.NewRequest("GET", userInfoURL, nil)

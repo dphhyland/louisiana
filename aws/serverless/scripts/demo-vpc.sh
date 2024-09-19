@@ -1,5 +1,5 @@
 sam deploy \
   --template-file ../customer-vpc.yaml \
-  --stack-name demo-vpc \
+  --stack-name trust-score-demo \
   --capabilities CAPABILITY_IAM \
-  --parameter-overrides Customer=demo
+  --parameter-overrides Customer=trust-score-demo 
