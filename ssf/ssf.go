@@ -17,24 +17,49 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+// Subject structure representing a subject in an event stream
+type Subject struct {
+	Format      string `json:"format" bson:"format"`
+	Email       string `json:"email,omitempty" bson:"email,omitempty"`
+	PhoneNumber string `json:"phone_number,omitempty" bson:"phone_number,omitempty"`
+}
+
 type StreamConfig struct {
-	StreamID        string   `json:"stream_id" bson:"stream_id"`
-	EventsSupported []string `json:"events_supported" bson:"events_supported"`
-	EventsEndpoint  string   `json:"events_endpoint" bson:"events_endpoint"`
-	Status          string   `json:"status" bson:"status"`
+	StreamID        string    `json:"stream_id" bson:"stream_id"`
+	EventsSupported []string  `json:"events_supported" bson:"events_supported"`
+	EventsEndpoint  string    `json:"events_endpoint" bson:"events_endpoint"`
+	Status          string    `json:"status" bson:"status"`
+	Subjects        []Subject `json:"subjects,omitempty" bson:"subjects,omitempty"`
+	Reason          *string   `json:"reason,omitempty" bson:"reason,omitempty"`
 }
 
 type StreamUpdatedEvent struct {
 	EventType string `json:"event_type"`
 	SubID     string `json:"sub_id"`
 	Status    string `json:"status"`
-	Reason    string `json:"reason"`
+	Reason    string `json:"reason,omitempty"`
 }
 
 var (
 	client     *mongo.Client
 	collection *mongo.Collection
 )
+
+var (
+	allowedStatuses = map[string]bool{
+		"enabled":  true,
+		"paused":   true,
+		"disabled": true,
+	}
+)
+
+// ValidateStatus checks if the provided status is in the list of allowed statuses
+func ValidateStatus(status string) error {
+	if _, ok := allowedStatuses[status]; !ok {
+		return fmt.Errorf("invalid status: %s, allowed values are: enabled, paused, disabled", status)
+	}
+	return nil
+}
 
 func main() {
 	// Get MongoDB URI from environment variable
@@ -60,6 +85,9 @@ func main() {
 	r := chi.NewRouter()
 	r.Post("/stream-config", registerStreamConfig)
 	r.Put("/stream-config/{stream_id}", updateStreamStatus)
+	r.Get("/stream-config/{stream_id}", getStreamStatus)
+	r.Post("/ssf/subjects:add", addSubjectToStream)         // Add subject
+	r.Post("/ssf/subjects:remove", removeSubjectFromStream) // Remove subject
 
 	// Set up HTTP server
 	server := &http.Server{
@@ -134,12 +162,18 @@ func registerStreamConfig(w http.ResponseWriter, r *http.Request) {
 func updateStreamStatus(w http.ResponseWriter, r *http.Request) {
 	streamID := chi.URLParam(r, "stream_id")
 	var updateRequest struct {
-		Status string `json:"status"`
-		Reason string `json:"reason"`
+		Status string  `json:"status"`
+		Reason *string `json:"reason,omitempty"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&updateRequest); err != nil {
 		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		return
+	}
+
+	// Validate the status field
+	if err := ValidateStatus(updateRequest.Status); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -149,6 +183,11 @@ func updateStreamStatus(w http.ResponseWriter, r *http.Request) {
 	// Update the stream status in MongoDB
 	filter := bson.M{"stream_id": streamID}
 	update := bson.M{"$set": bson.M{"status": updateRequest.Status}}
+
+	if updateRequest.Reason != nil {
+		update["$set"].(bson.M)["reason"] = updateRequest.Reason
+	}
+
 	_, err := collection.UpdateOne(ctx, filter, update)
 	if err != nil {
 		log.Printf("Error updating stream status: %v", err)
@@ -172,12 +211,103 @@ func updateStreamStatus(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Stream status updated and event sent"))
 }
 
-func sendStreamUpdatedEvent(streamConfig StreamConfig, reason string) {
+func getStreamStatus(w http.ResponseWriter, r *http.Request) {
+	streamID := chi.URLParam(r, "stream_id")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	// Find the stream configuration by stream_id
+	var streamConfig StreamConfig
+	err := collection.FindOne(ctx, bson.M{"stream_id": streamID}).Decode(&streamConfig)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			http.Error(w, "Stream configuration not found", http.StatusNotFound)
+			return
+		}
+		log.Printf("Error fetching stream configuration: %v", err)
+		http.Error(w, "Failed to fetch stream configuration", http.StatusInternalServerError)
+		return
+	}
+
+	// Return the stream status
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(streamConfig)
+}
+
+// addSubjectToStream handles adding a subject to a stream as per SSF 7.1.3.1
+func addSubjectToStream(w http.ResponseWriter, r *http.Request) {
+	var request struct {
+		StreamID string  `json:"stream_id"`
+		Subject  Subject `json:"subject"`
+		Verified *bool   `json:"verified,omitempty"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	// Find the stream configuration by stream_id
+	filter := bson.M{"stream_id": request.StreamID}
+	update := bson.M{"$push": bson.M{"subjects": request.Subject}}
+
+	result := collection.FindOneAndUpdate(ctx, filter, update)
+	if result.Err() != nil {
+		if result.Err() == mongo.ErrNoDocuments {
+			http.Error(w, "Stream not found", http.StatusNotFound)
+			return
+		}
+		log.Printf("Error adding subject to stream: %v", result.Err())
+		http.Error(w, "Failed to add subject to stream", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
+// removeSubjectFromStream handles removing a subject from a stream as per SSF 7.1.3.2
+func removeSubjectFromStream(w http.ResponseWriter, r *http.Request) {
+	var request struct {
+		StreamID string  `json:"stream_id"`
+		Subject  Subject `json:"subject"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	// Remove the subject from the stream
+	filter := bson.M{"stream_id": request.StreamID}
+	update := bson.M{"$pull": bson.M{"subjects": request.Subject}}
+
+	result := collection.FindOneAndUpdate(ctx, filter, update)
+	if result.Err() != nil {
+		if result.Err() == mongo.ErrNoDocuments {
+			http.Error(w, "Stream not found", http.StatusNotFound)
+			return
+		}
+		log.Printf("Error removing subject from stream: %v", result.Err())
+		http.Error(w, "Failed to remove subject from stream", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func sendStreamUpdatedEvent(streamConfig StreamConfig, reason *string) {
 	event := StreamUpdatedEvent{
 		EventType: "https://schemas.openid.net/secevent/ssf/event-type/stream-updated",
 		SubID:     streamConfig.StreamID,
 		Status:    streamConfig.Status,
-		Reason:    reason,
+		Reason:    *reason,
 	}
 
 	eventData, err := json.Marshal(event)
