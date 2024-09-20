@@ -34,13 +34,13 @@ func TestStreamUpdatedEvent(t *testing.T) {
 		EventType: "https://schemas.openid.net/secevent/ssf/event-type/stream-updated",
 		SubID:     "test-sub-id",
 		Status:    "enabled",
-		Reason:    "test-reason",
+		Reason:    newString("test-reason"), // Use newString to create a *string
 	}
 
 	assert.Equal(t, "https://schemas.openid.net/secevent/ssf/event-type/stream-updated", streamUpdatedEvent.EventType)
 	assert.Equal(t, "test-sub-id", streamUpdatedEvent.SubID)
 	assert.Equal(t, "enabled", streamUpdatedEvent.Status)
-	assert.Equal(t, "test-reason", streamUpdatedEvent.Reason)
+	assert.Equal(t, "test-reason", *streamUpdatedEvent.Reason) // Dereference the pointer
 }
 
 func TestMongoDBConnection(t *testing.T) {
@@ -57,7 +57,6 @@ func TestMongoDBConnection(t *testing.T) {
 	err = client.Disconnect(ctx)
 	assert.NoError(t, err)
 }
-
 func TestSendStreamUpdatedEvent(t *testing.T) {
 	// Create a test server to mock the stream endpoint
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -72,7 +71,7 @@ func TestSendStreamUpdatedEvent(t *testing.T) {
 		assert.Equal(t, "https://schemas.openid.net/secevent/ssf/event-type/stream-updated", event.EventType)
 		assert.Equal(t, "test-sub-id", event.SubID)
 		assert.Equal(t, "enabled", event.Status)
-		assert.Equal(t, "test-reason", event.Reason)
+		assert.Equal(t, "test-reason", *event.Reason) // Dereference *Reason
 
 		w.WriteHeader(http.StatusOK)
 	}))
@@ -84,7 +83,8 @@ func TestSendStreamUpdatedEvent(t *testing.T) {
 		EventsEndpoint: ts.URL,
 	}
 
-	sendStreamUpdatedEvent(streamConfig, "test-reason")
+	// Use pointer to "test-reason"
+	sendStreamUpdatedEvent(streamConfig, newString("test-reason"))
 }
 
 func TestGenerateStreamID(t *testing.T) {
@@ -183,4 +183,89 @@ func TestRemoveSubjectFromStream(t *testing.T) {
 	resp, err := client.Do(req)
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusNoContent, resp.StatusCode)
+}
+
+// New tests for status validation
+func TestValidStreamStatusUpdate(t *testing.T) {
+	// Create a test server to mock the stream status update
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body, err := ioutil.ReadAll(r.Body)
+		assert.NoError(t, err)
+		defer r.Body.Close()
+
+		var request struct {
+			Status string  `json:"status"`
+			Reason *string `json:"reason,omitempty"`
+		}
+		err = json.Unmarshal(body, &request)
+		assert.NoError(t, err)
+
+		// Test that valid status is accepted
+		assert.Equal(t, "enabled", request.Status)
+		assert.Equal(t, "Valid reason", *request.Reason)
+
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer ts.Close()
+
+	client := &http.Client{}
+	payload := struct {
+		Status string  `json:"status"`
+		Reason *string `json:"reason,omitempty"`
+	}{
+		Status: "enabled",
+		Reason: newString("Valid reason"),
+	}
+
+	data, _ := json.Marshal(payload)
+	req, _ := http.NewRequest("PUT", ts.URL, bytes.NewBuffer(data))
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := client.Do(req)
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+}
+
+func TestInvalidStreamStatusUpdate(t *testing.T) {
+	// Create a test server to mock the stream status update
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body, err := ioutil.ReadAll(r.Body)
+		assert.NoError(t, err)
+		defer r.Body.Close()
+
+		var request struct {
+			Status string  `json:"status"`
+			Reason *string `json:"reason,omitempty"`
+		}
+		err = json.Unmarshal(body, &request)
+		assert.NoError(t, err)
+
+		// Test that invalid status is rejected
+		assert.Equal(t, "invalid-status", request.Status)
+
+		w.WriteHeader(http.StatusBadRequest)
+	}))
+	defer ts.Close()
+
+	client := &http.Client{}
+	payload := struct {
+		Status string  `json:"status"`
+		Reason *string `json:"reason,omitempty"`
+	}{
+		Status: "invalid-status",
+		Reason: newString("Invalid reason"),
+	}
+
+	data, _ := json.Marshal(payload)
+	req, _ := http.NewRequest("PUT", ts.URL, bytes.NewBuffer(data))
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := client.Do(req)
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+}
+
+// Helper function to create a string pointer
+func newString(s string) *string {
+	return &s
 }

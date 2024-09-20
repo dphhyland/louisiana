@@ -34,10 +34,10 @@ type StreamConfig struct {
 }
 
 type StreamUpdatedEvent struct {
-	EventType string `json:"event_type"`
-	SubID     string `json:"sub_id"`
-	Status    string `json:"status"`
-	Reason    string `json:"reason,omitempty"`
+	EventType string  `json:"event_type"`
+	SubID     string  `json:"sub_id"`
+	Status    string  `json:"status"`
+	Reason    *string `json:"reason,omitempty"`
 }
 
 var (
@@ -307,7 +307,7 @@ func sendStreamUpdatedEvent(streamConfig StreamConfig, reason *string) {
 		EventType: "https://schemas.openid.net/secevent/ssf/event-type/stream-updated",
 		SubID:     streamConfig.StreamID,
 		Status:    streamConfig.Status,
-		Reason:    *reason,
+		Reason:    reason,
 	}
 
 	eventData, err := json.Marshal(event)
