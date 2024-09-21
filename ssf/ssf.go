@@ -5,12 +5,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"time"
 
+	"github.com/dgrijalva/jwt-go"
 	"github.com/go-chi/chi/v5"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -161,24 +163,72 @@ func registerStreamConfig(w http.ResponseWriter, r *http.Request) {
 
 func updateStreamStatus(w http.ResponseWriter, r *http.Request) {
 	streamID := chi.URLParam(r, "stream_id")
+
 	var updateRequest struct {
 		Status string  `json:"status"`
 		Reason *string `json:"reason,omitempty"`
 	}
 
-	if err := json.NewDecoder(r.Body).Decode(&updateRequest); err != nil {
+	// Parse and validate the JWT
+	tokenString, err := ioutil.ReadAll(r.Body)
+	if err != nil {
 		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		log.Println("Error reading request body:", err)
+		return
+	}
+
+	token, err := jwt.Parse(string(tokenString), func(token *jwt.Token) (interface{}, error) {
+		// Ensure that the signing method is HMAC (HS256)
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return []byte("your-signing-secret"), nil
+	})
+
+	if err != nil || !token.Valid {
+		http.Error(w, "Invalid token", http.StatusBadRequest)
+		log.Println("Error parsing token:", err)
+		return
+	}
+
+	// Extract claims from the token
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		status, ok := claims["status"].(string)
+		if !ok {
+			http.Error(w, "Missing or invalid status", http.StatusBadRequest)
+			log.Println("Missing or invalid status in JWT")
+			return
+		}
+
+		updateRequest.Status = status
+		if reason, ok := claims["reason"].(string); ok {
+			updateRequest.Reason = &reason
+		}
+	} else {
+		http.Error(w, "Invalid token claims", http.StatusBadRequest)
+		log.Println("Invalid token claims")
 		return
 	}
 
 	// Validate the status field
 	if err := ValidateStatus(updateRequest.Status); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		log.Println("Error validating status:", err)
 		return
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
+
+	// Fetch the current stream configuration for logging before update
+	var currentStreamConfig StreamConfig
+	err = collection.FindOne(ctx, bson.M{"stream_id": streamID}).Decode(&currentStreamConfig)
+	if err != nil {
+		http.Error(w, "Stream not found", http.StatusNotFound)
+		log.Printf("Error finding stream configuration with stream_id %s: %v", streamID, err)
+		return
+	}
+	log.Printf("Stream configuration before update: %+v", currentStreamConfig)
 
 	// Update the stream status in MongoDB
 	filter := bson.M{"stream_id": streamID}
@@ -186,12 +236,21 @@ func updateStreamStatus(w http.ResponseWriter, r *http.Request) {
 
 	if updateRequest.Reason != nil {
 		update["$set"].(bson.M)["reason"] = updateRequest.Reason
+	} else {
+		update["$unset"] = bson.M{"reason": ""}
 	}
 
-	_, err := collection.UpdateOne(ctx, filter, update)
+	result, err := collection.UpdateOne(ctx, filter, update)
 	if err != nil {
-		log.Printf("Error updating stream status: %v", err)
 		http.Error(w, "Failed to update stream status", http.StatusInternalServerError)
+		log.Println("Error updating stream status in MongoDB:", err)
+		return
+	}
+
+	// Check if the document was modified
+	if result.MatchedCount == 0 {
+		http.Error(w, "No document found to update", http.StatusNotFound)
+		log.Printf("No document found for stream_id %s", streamID)
 		return
 	}
 
@@ -199,10 +258,11 @@ func updateStreamStatus(w http.ResponseWriter, r *http.Request) {
 	var updatedStreamConfig StreamConfig
 	err = collection.FindOne(ctx, filter).Decode(&updatedStreamConfig)
 	if err != nil {
-		log.Printf("Error fetching updated stream configuration: %v", err)
 		http.Error(w, "Failed to fetch updated stream configuration", http.StatusInternalServerError)
+		log.Println("Error fetching updated stream configuration:", err)
 		return
 	}
+	log.Printf("Stream configuration after update: %+v", updatedStreamConfig)
 
 	// Send the stream-updated event
 	sendStreamUpdatedEvent(updatedStreamConfig, updateRequest.Reason)
@@ -237,23 +297,37 @@ func getStreamStatus(w http.ResponseWriter, r *http.Request) {
 
 // addSubjectToStream handles adding a subject to a stream as per SSF 7.1.3.1
 func addSubjectToStream(w http.ResponseWriter, r *http.Request) {
-	var request struct {
-		StreamID string  `json:"stream_id"`
-		Subject  Subject `json:"subject"`
-		Verified *bool   `json:"verified,omitempty"`
-	}
-
-	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+	// Parse the JWT from the request body
+	claims, err := parseJWT(r, "your-signing-secret") // Use your actual signing secret
+	if err != nil {
+		http.Error(w, "Invalid JWT: "+err.Error(), http.StatusUnauthorized)
 		return
 	}
 
+	// Extract the stream_id and subject from the claims
+	streamID, ok := claims["stream_id"].(string)
+	if !ok {
+		http.Error(w, "Missing or invalid stream_id in JWT", http.StatusBadRequest)
+		return
+	}
+
+	subjectMap, ok := claims["subject"].(map[string]interface{})
+	if !ok {
+		http.Error(w, "Missing or invalid subject in JWT", http.StatusBadRequest)
+		return
+	}
+
+	subject := Subject{
+		Format: subjectMap["format"].(string),
+		Email:  subjectMap["email"].(string), // Assuming it's an email subject
+	}
+
+	// Update MongoDB to add the subject to the stream
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	// Find the stream configuration by stream_id
-	filter := bson.M{"stream_id": request.StreamID}
-	update := bson.M{"$push": bson.M{"subjects": request.Subject}}
+	filter := bson.M{"stream_id": streamID}
+	update := bson.M{"$push": bson.M{"subjects": subject}}
 
 	result := collection.FindOneAndUpdate(ctx, filter, update)
 	if result.Err() != nil {
@@ -271,22 +345,37 @@ func addSubjectToStream(w http.ResponseWriter, r *http.Request) {
 
 // removeSubjectFromStream handles removing a subject from a stream as per SSF 7.1.3.2
 func removeSubjectFromStream(w http.ResponseWriter, r *http.Request) {
-	var request struct {
-		StreamID string  `json:"stream_id"`
-		Subject  Subject `json:"subject"`
-	}
-
-	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+	// Parse the JWT from the request body
+	claims, err := parseJWT(r, "your-signing-secret") // Use your actual signing secret
+	if err != nil {
+		http.Error(w, "Invalid JWT: "+err.Error(), http.StatusUnauthorized)
 		return
 	}
 
+	// Extract the stream_id and subject from the claims
+	streamID, ok := claims["stream_id"].(string)
+	if !ok {
+		http.Error(w, "Missing or invalid stream_id in JWT", http.StatusBadRequest)
+		return
+	}
+
+	subjectMap, ok := claims["subject"].(map[string]interface{})
+	if !ok {
+		http.Error(w, "Missing or invalid subject in JWT", http.StatusBadRequest)
+		return
+	}
+
+	subject := Subject{
+		Format: subjectMap["format"].(string),
+		Email:  subjectMap["email"].(string), // Assuming it's an email subject
+	}
+
+	// Remove the subject from the stream in MongoDB
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	// Remove the subject from the stream
-	filter := bson.M{"stream_id": request.StreamID}
-	update := bson.M{"$pull": bson.M{"subjects": request.Subject}}
+	filter := bson.M{"stream_id": streamID}
+	update := bson.M{"$pull": bson.M{"subjects": subject}}
 
 	result := collection.FindOneAndUpdate(ctx, filter, update)
 	if result.Err() != nil {
@@ -303,27 +392,35 @@ func removeSubjectFromStream(w http.ResponseWriter, r *http.Request) {
 }
 
 func sendStreamUpdatedEvent(streamConfig StreamConfig, reason *string) {
-	event := StreamUpdatedEvent{
-		EventType: "https://schemas.openid.net/secevent/ssf/event-type/stream-updated",
-		SubID:     streamConfig.StreamID,
-		Status:    streamConfig.Status,
-		Reason:    reason,
+	// Create the payload for the event
+	eventPayload := map[string]interface{}{
+		"event_type": "https://schemas.openid.net/secevent/ssf/event-type/stream-updated",
+		"sub_id":     streamConfig.StreamID, // 'sub_id' as defined in SSF, Section 7.1.2
+		"status":     streamConfig.Status,   // 'status' as per SSF, Section 7.1.2
+		"iat":        time.Now().Unix(),     // 'iat' is used for token issued at time
 	}
 
-	eventData, err := json.Marshal(event)
+	// If reason is provided, include it
+	if reason != nil {
+		eventPayload["reason"] = *reason
+	}
+
+	// Generate the SET (JWT) by signing the event payload
+	set, err := generateSecureEventToken(eventPayload, "your-signing-secret") // Use your secret key for signing
 	if err != nil {
-		log.Printf("Error encoding stream-updated event: %v", err)
+		log.Printf("Error generating SET: %v", err)
 		return
 	}
 
-	// Send the event to the stream endpoint
-	req, err := http.NewRequest("POST", streamConfig.EventsEndpoint, bytes.NewBuffer(eventData))
+	// Send the SET to the event endpoint
+	req, err := http.NewRequest("POST", streamConfig.EventsEndpoint, bytes.NewBuffer([]byte(set)))
 	if err != nil {
 		log.Printf("Error creating request: %v", err)
 		return
 	}
+	req.Header.Set("Content-Type", "application/jwt")
 
-	client := &http.Client{Timeout: 10 * time.Second}
+	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
 		log.Printf("Error sending stream-updated event to endpoint %s: %v", streamConfig.EventsEndpoint, err)
@@ -333,6 +430,47 @@ func sendStreamUpdatedEvent(streamConfig StreamConfig, reason *string) {
 
 	if resp.StatusCode != http.StatusOK {
 		log.Printf("Stream endpoint responded with status: %s", resp.Status)
+	}
+}
+
+func generateSecureEventToken(eventPayload map[string]interface{}, secret string) (string, error) {
+	// Create a new token using the HS256 signing method
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims(eventPayload))
+
+	// Sign the token using the secret
+	tokenString, err := token.SignedString([]byte(secret))
+	if err != nil {
+		return "", err
+	}
+
+	return tokenString, nil
+}
+
+func parseJWT(r *http.Request, secret string) (jwt.MapClaims, error) {
+	// Read the request body to get the JWT token
+	tokenString, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	// Parse the JWT token
+	token, err := jwt.Parse(string(tokenString), func(token *jwt.Token) (interface{}, error) {
+		// Ensure that the signing method is HMAC (HS256)
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return []byte(secret), nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Extract and return the claims (payload)
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		return claims, nil
+	} else {
+		return nil, fmt.Errorf("invalid token")
 	}
 }
 
