@@ -1,0 +1,10 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: go_app_container
+    environment:
+      - GO_ENV=production
+    restart: unless-stopped
+    # command: tail -f /dev/null   # Keeps the container running

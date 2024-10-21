@@ -78,3 +78,13 @@ EOF
 curl -X POST http://localhost:8080/ssf/subjects:add \
 -H "Content-Type: application/jwt" \
 --data-binary "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJldmVudF90eXBlIjoiaHR0cHM6Ly9zY2hlbWFzLm9wZW5pZC5uZXQvc2VjZXZlbnQvc3NmL2V2ZW50LXR5cGUvc3ViamVjdC1hZGRlZCIsInN0cmVhbV9pZCI6InN0cmVhbS0xNzI2ODMyNTIxNjM4NzQ1MDAwIiwic3ViamVjdCI6eyJmb3JtYXQiOiJlbWFpbCIsImVtYWlsIjoiZXhhbXBsZS51c2VyQGV4YW1wbGUuY29tIn0sInZlcmlmaWVkIjp0cnVlLCJpYXQiOjE1MTYyMzkwMjJ9.PGihFmz-jUZxO_KtUN-Ni-4OOfNBAHPQEgZID2MaD28"
+
+curl -X POST "http://localhost:8080/produce-event" \
+     -H "Content-Type: application/json" \
+     -d '{
+           "event_type": "https://schemas.openid.net/secevent/ssf/event-type/stream-updated",
+           "sub_id": "f67e39a0a4d34d56b3aa1bc4cff0069f",
+           "status": "paused",
+           "reason": "Maintenance",
+           "iat": 1694974123
+         }'

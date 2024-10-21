@@ -24,6 +24,56 @@ var (
 	clientId       string
 )
 
+type EmailThreatMetric struct {
+	FraudReported       bool `json:"fraudReported"`
+	DaysActive          int  `json:"daysActive"`
+	SpamFlagged         bool `json:"spamFlagged"`
+	DaysSinceLastUpdate int  `json:"daysSinceLastUpdate"`
+}
+
+type EmailThreatScoreResponse struct {
+	Score   int               `json:"score"`
+	Metrics EmailThreatMetric `json:"metrics"`
+}
+
+type DomainThreatMetric struct {
+	DaysActive          int  `json:"daysActive"`
+	DaysSinceLastUpdate int  `json:"daysSinceLastUpdate"`
+	SpamFlagged         bool `json:"spamFlagged"`
+	FraudReported       bool `json:"fraudReported"`
+}
+
+type DomainThreatScoreResponse struct {
+	Score   int                `json:"score"`
+	Metrics DomainThreatMetric `json:"metrics"`
+}
+
+type TelcoThreatScoreResponse struct {
+	Score   int          `json:"score"`
+	Metrics ThreatMetric `json:"metrics"`
+}
+type TelcoThreatMetric struct {
+	DaysActive    int  `json:"daysActive"`
+	SimSwap       bool `json:"simSwap"`
+	FraudReported bool `json:"fraudReported"`
+}
+
+type WebsiteThreatMetric struct {
+	DaysActive      int  `json:"daysActive"`
+	SpamFlagged     bool `json:"spamFlagged"`
+	PhishingFlagged bool `json:"phishingFlagged"`
+}
+
+type WebsiteThreatScoreResponse struct {
+	Score   int                 `json:"score"`
+	Metrics WebsiteThreatMetric `json:"metrics"`
+}
+
+type BankCheckResponse struct {
+	Match         string `json:"match"`                   // "yes", "no", or "maybe"
+	ActualAccount string `json:"actualAccount,omitempty"` // Only populated if "maybe"
+}
+
 type ApiDiscoveryEndpoint struct {
 	ApiEndpoint string `json:"ApiEndpoint"`
 }
@@ -334,6 +384,7 @@ func extractHostname(endpoint string) (string, error) {
 
 	return u.Hostname(), nil
 }
+
 func createTLSClient(certFile, keyFile, caFile string) (*http.Client, error) {
 	cert, err := tls.LoadX509KeyPair(certFile, keyFile)
 	if err != nil {

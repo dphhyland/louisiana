@@ -7,7 +7,7 @@ Description: |
 Parameters:
   Customer:
     Type: String
-    Description: The Customer deployment for the customer. 
+    Description: The Customer deployment for the customer.
 
 Resources:
   # VPC
@@ -36,7 +36,9 @@ Resources:
     Properties:
       VpcId: !Ref MyVPC
       CidrBlock: 10.0.1.0/24
-      AvailabilityZone: !Select [ 0, !GetAZs '' ]
+      AvailabilityZone: !Select
+        - 0
+        - !GetAZs ''
       Tags:
         - Key: Name
           Value: Public Subnet
@@ -47,7 +49,9 @@ Resources:
     Properties:
       VpcId: !Ref MyVPC
       CidrBlock: 10.0.10.0/24
-      AvailabilityZone: !Select [ 0, !GetAZs '' ]
+      AvailabilityZone: !Select
+        - 0
+        - !GetAZs ''
       Tags:
         - Key: Name
           Value: Private Subnet

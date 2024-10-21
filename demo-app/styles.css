@@ -1,0 +1,131 @@
+/* Basic global settings for fonts and body */
+body {
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f3f2ef; /* LinkedIn's light background */
+    margin: 0;
+    padding: 0;
+}
+
+/* Header */
+h1 {
+    text-align: center;
+    padding: 20px;
+    background-color: #0077b5; /* LinkedIn blue */
+    color: white;
+    font-weight: 600;
+    margin-bottom: 0;
+}
+
+/* Tab navigation */
+.tabs {
+    display: flex;
+    justify-content: center;
+    padding: 15px;
+    background-color: white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.tabs button {
+    margin-right: 10px;
+    padding: 10px 20px;
+    cursor: pointer;
+    border: none;
+    background-color: transparent;
+    color: #0077b5;
+    font-size: 1rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    border-radius: 5px;
+}
+
+.tabs button.active {
+    background-color: #eef3f8;
+    color: #0077b5;
+    font-weight: 700;
+    border: 1px solid #0077b5;
+}
+
+.tabs button:hover {
+    background-color: #eef3f8;
+    color: #0077b5;
+}
+
+/* Form container */
+form {
+    max-width: 600px;
+    margin: 20px auto;
+    background-color: white;
+    padding: 20px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+}
+
+/* Form labels and inputs */
+form label {
+    display: block;
+    margin-bottom: 5px;
+    color: #5a5a5a;
+    font-weight: 600;
+}
+
+form input[type="text"], form input[type="email"] {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 15px;
+    border: 1px solid #d1d1d1;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+    font-size: 0.95rem;
+}
+
+form input[type="text"]:focus, form input[type="email"]:focus {
+    border-color: #0077b5;
+    outline: none;
+    background-color: white;
+}
+
+/* Submit button */
+form button {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    background-color: #0077b5;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: background-color 0.3s ease;
+}
+
+form button:hover {
+    background-color: #005682;
+}
+
+/* Tab content */
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* Success/Result Badge */
+.badge {
+    text-align: center;
+    padding: 15px;
+    font-size: 1.2rem;
+    color: #fff;
+    margin-top: 20px;
+    border-radius: 5px;
+}
+
+.badge.valid {
+    background-color: #28a745; /* Success */
+}
+
+.badge.invalid {
+    background-color: #dc3545; /* Error */
+}

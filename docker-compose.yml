@@ -1,0 +1,71 @@
+services:
+  # Node.js service (op)
+  op-louisina:
+    build:
+      context: ./op
+      dockerfile: Dockerfile
+    container_name: op-louisiana
+    depends_on:
+      - mongo-louisiana
+    networks:
+      - internal-network
+    environment:
+      - MONGO_URI=mongodb://mongo-louisiana:27017/oidc-provider
+
+
+  # MongoDB service
+  mongo-louisiana:
+    image: mongo:5.0
+    container_name: mongo-louisiana
+    volumes:
+      - mongo_data:/data/db
+    ports:
+      - "27017:27017"
+    networks:
+      - internal-network  # Can access internal services
+      - external-network 
+
+  # Mutual TLS proxy (mtls)
+  mtls-louisiana:
+    build:
+      context: ./mtls
+      dockerfile: Dockerfile
+    container_name: mtls-louisiana
+    volumes:
+      - ./mtls/certs/ca.crt:/app/certs/ca.crt
+      - ./mtls/certs/mtls.crt:/app/certs/mtls.crt
+      - ./mtls/certs/mtls.key:/app/certs/mtls.key
+    ports:
+      - "443:443"  # Only expose port 443 externally
+    networks:
+      - internal-network  # Can access internal services
+      - external-network  # Exposed externally
+    depends_on:
+      - op-louisina
+      - mongo-louisiana
+    environment:
+      - CA_CERT_PATH=/app/certs/ca.crt
+      - SERVER_CERT_PATH=/app/certs/mtls.crt
+      - SERVER_KEY_PATH=/app/certs/mtls.key
+      - AUTH_HOST=http://op-louisiana:3000
+      - API_HOST=http://api:8080
+      - NOTIFICATION_HOST=http://notification:8081
+      - EXTERNAL_AUTH_HOST=auth.localhost
+      - EXTERNAL_API_HOST=api.localhost
+      - EXTERNAL_NOTIFICATION_HOST=notification.localhost
+      - CLIENT_ID=client
+      - CLIENT_SECRET=12345678
+      - INTROSPECTION_URL=http://op-louisiana:3000/token/introspection
+      - USER_INFO_URL=http://op-louisiana:3000/me
+      - ISSUER=https://auth.localhost
+
+# Define internal and external networks
+networks:
+  internal-network:
+    driver: bridge  # Internal services will communicate here
+  external-network:
+    driver: bridge  # Only mtls is exposed externally
+
+# Volumes for MongoDB persistent storage
+volumes:
+  mongo_data:
