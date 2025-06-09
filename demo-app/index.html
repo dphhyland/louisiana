@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -70,7 +71,8 @@
             font-weight: 600;
         }
 
-        form input[type="text"], form input[type="email"] {
+        form input[type="text"],
+        form input[type="email"] {
             width: 100%;
             padding: 12px;
             margin-bottom: 15px;
@@ -78,9 +80,12 @@
             border-radius: 5px;
             background-color: #f9f9f9;
             font-size: 0.95rem;
+            box-sizing: border-box;
+            /* Ensures the padding and border are included in the total width */
         }
 
-        form input[type="text"]:focus, form input[type="email"]:focus {
+        form input[type="text"]:focus,
+        form input[type="email"]:focus {
             border-color: #0077b5;
             outline: none;
             background-color: white;
@@ -130,89 +135,98 @@
         }
 
         /* Alert panels for different message types */
-.alert {
-    padding: 20px;
-    margin-bottom: 20px;
-    border-radius: 4px;
-    font-size: 1rem;
-}
+        .alert {
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+            font-size: 1rem;
+            max-width: 600px;
+            /* Same as form max-width */
+            margin: 20px auto;
+            /* Center the alert with auto left/right margins */
+        }
 
-.alert-info {
-    background-color: #e7f3fe;
-    color: #31708f;
-    border: 1px solid #bce8f1;
-}
+        .alert-info {
+            background-color: #e7f3fe;
+            color: #31708f;
+            border: 1px solid #bce8f1;
+        }
 
-.alert-success {
-    background-color: #dff0d8;
-    color: #3c763d;
-    border: 1px solid #d6e9c6;
-}
+        .alert-success {
+            background-color: #dff0d8;
+            color: #3c763d;
+            border: 1px solid #d6e9c6;
+        }
 
-.alert-warning {
-    background-color: #fcf8e3;
-    color: #8a6d3b;
-    border: 1px solid #faebcc;
-}
+        .alert-warning {
+            background-color: #fcf8e3;
+            color: #8a6d3b;
+            border: 1px solid #faebcc;
+        }
 
-.alert-error {
-    background-color: #f2dede;
-    color: #a94442;
-    border: 1px solid #ebccd1;
-}
+        .alert-error {
+            background-color: #f2dede;
+            color: #a94442;
+            border: 1px solid #ebccd1;
+        }
     </style>
 </head>
+
 <body>
     <h1>Trust Score Verification</h1>
 
     <div class="tabs">
-        <button class="tab-button {{if eq .ActiveTab "telephony"}}active{{end}}" data-tab="telephony">Telephony</button>
-        <button class="tab-button {{if eq .ActiveTab "bank"}}active{{end}}" data-tab="bank">Bank</button>
-        <button class="tab-button {{if eq .ActiveTab "email"}}active{{end}}" data-tab="email">Email</button>
-        <button class="tab-button {{if eq .ActiveTab "domain"}}active{{end}}" data-tab="domain">Domain</button>
-        <button class="tab-button {{if eq .ActiveTab "website"}}active{{end}}" data-tab="website">Website</button>
-        <button class="tab-button {{if eq .ActiveTab "crm"}}active{{end}}" data-tab="crm">CRM</button>
+        <button class="tab-button {{if eq .ActiveTab " telephony"}}active{{end}}"
+            data-tab="telephony">Telephony</button>
+        <button class="tab-button {{if eq .ActiveTab " bank"}}active{{end}}" data-tab="bank">Bank</button>
+        <button class="tab-button {{if eq .ActiveTab " email"}}active{{end}}" data-tab="email">Email</button>
+        <button class="tab-button {{if eq .ActiveTab " domain"}}active{{end}}" data-tab="domain">Domain</button>
+        <button class="tab-button {{if eq .ActiveTab " website"}}active{{end}}" data-tab="website">Website</button>
+        <button class="tab-button {{if eq .ActiveTab " crm"}}active{{end}}" data-tab="crm">CRM</button>
     </div>
 
     <form id="trust-score-form" method="POST">
         <input type="hidden" id="activeTab" name="activeTab" value="{{ .ActiveTab }}">
 
         <!-- Telephony Form -->
-        <div class="tab-content {{if eq .ActiveTab "telephony"}}active{{end}}" id="telephony">
+        <div class="tab-content {{if eq .ActiveTab " telephony"}}active{{end}}" id="telephony">
             <label for="telephony">Mobile Number</label>
-            <input type="text" id="telephony" name="telephony" placeholder="Enter Mobile Number" value="{{ .Telephony }}">
+            <input type="text" id="telephony" name="telephony" placeholder="Enter Mobile Number"
+                value="{{ .Telephony }}">
         </div>
 
         <!-- Bank Form -->
-        <div class="tab-content {{if eq .ActiveTab "bank"}}active{{end}}" id="bank">
+        <div class="tab-content {{if eq .ActiveTab " bank"}}active{{end}}" id="bank">
             <label for="bankBSB">BSB</label>
             <input type="text" id="bankBSB" name="bankBSB" placeholder="Enter BSB" value="{{ .BankBSB }}">
             <label for="bankAccNo">Account Number</label>
-            <input type="text" id="bankAccNo" name="bankAccNo" placeholder="Enter Account Number" value="{{ .BankAccNo }}">
+            <input type="text" id="bankAccNo" name="bankAccNo" placeholder="Enter Account Number"
+                value="{{ .BankAccNo }}">
             <label for="bankAccName">Account Name</label>
-            <input type="text" id="bankAccName" name="bankAccName" placeholder="Enter Account Name" value="{{ .BankAccName }}">
+            <input type="text" id="bankAccName" name="bankAccName" placeholder="Enter Account Name"
+                value="{{ .BankAccName }}">
         </div>
 
         <!-- Email Form -->
-        <div class="tab-content {{if eq .ActiveTab "email"}}active{{end}}" id="email">
+        <div class="tab-content {{if eq .ActiveTab " email"}}active{{end}}" id="email">
             <label for="email">Email Address</label>
             <input type="email" id="email" name="email" placeholder="Enter Email" value="{{ .Email }}">
         </div>
 
         <!-- Domain Form -->
-        <div class="tab-content {{if eq .ActiveTab "domain"}}active{{end}}" id="domain">
+        <div class="tab-content {{if eq .ActiveTab " domain"}}active{{end}}" id="domain">
             <label for="domain">Domain</label>
             <input type="text" id="domain" name="domain" placeholder="Enter Domain" value="{{ .Domain }}">
         </div>
 
         <!-- Website Form -->
-        <div class="tab-content {{if eq .ActiveTab "website"}}active{{end}}" id="website">
+        <div class="tab-content {{if eq .ActiveTab " website"}}active{{end}}" id="website">
             <label for="website">Website</label>
             <input type="text" id="website" name="website" placeholder="Enter Website" value="{{ .Website }}">
         </div>
 
         <!-- CRM Form -->
-        <div class="tab-content {{if eq .ActiveTab "crm"}}active{{end}}" id="crm">
+        <div class="tab-content {{if eq .ActiveTab " crm"}}active{{end}}" id="crm">
             <label for="crmName">Full Name</label>
             <input type="text" id="crmName" name="crmName" placeholder="Enter Full Name" value="{{ .CRMName }}">
             <label for="crmEmail">Email</label>
@@ -260,4 +274,5 @@
         });
     </script>
 </body>
+
 </html>

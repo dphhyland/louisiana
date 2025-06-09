@@ -1,0 +1,586 @@
+{
+  "domain_threat_metrics": {
+    "telstra.com": {
+      "daysActive": 3300,
+      "daysSinceLastUpdate": 30,
+      "phishing": true,
+      "fraudReported": false
+    },
+    "example.com": {
+      "daysActive": 500,
+      "daysSinceLastUpdate": 5,
+      "phishing": false,
+      "fraudReported": false
+    },
+    "paypal-support.net": {
+      "daysActive": 100,
+      "daysSinceLastUpdate": 2,
+      "phishing": true,
+      "fraudReported": true
+    },
+    "bankofamerica-secure.com": {
+      "daysActive": 200,
+      "daysSinceLastUpdate": 10,
+      "phishing": true,
+      "fraudReported": true
+    },
+    "apple-verify-id.com": {
+      "daysActive": 150,
+      "daysSinceLastUpdate": 1,
+      "phishing": true,
+      "fraudReported": false
+    },
+    "secure-amazon.com": {
+      "daysActive": 300,
+      "daysSinceLastUpdate": 15,
+      "phishing": true,
+      "fraudReported": true
+    },
+    "my-university.com": {
+      "daysActive": 1200,
+      "daysSinceLastUpdate": 30,
+      "phishing": false,
+      "fraudReported": false
+    },
+    "google-verification.net": {
+      "daysActive": 180,
+      "daysSinceLastUpdate": 5,
+      "phishing": true,
+      "fraudReported": true
+    },
+    "hotmail-securelogin.com": {
+      "daysActive": 90,
+      "daysSinceLastUpdate": 7,
+      "phishing": true,
+      "fraudReported": false
+    },
+    "your-bank-online.com": {
+      "daysActive": 400,
+      "daysSinceLastUpdate": 12,
+      "phishing": true,
+      "fraudReported": true
+    },
+    "update-microsoft.net": {
+      "daysActive": 60,
+      "daysSinceLastUpdate": 3,
+      "phishing": true,
+      "fraudReported": true
+    },
+    "wellsfargo-secure.com": {
+      "daysActive": 250,
+      "daysSinceLastUpdate": 8,
+      "phishing": true,
+      "fraudReported": true
+    },
+    "netflix-account.net": {
+      "daysActive": 175,
+      "daysSinceLastUpdate": 2,
+      "phishing": true,
+      "fraudReported": false
+    },
+    "royalbank-secure.com": {
+      "daysActive": 220,
+      "daysSinceLastUpdate": 4,
+      "phishing": true,
+      "fraudReported": true
+    },
+    "fb-security-check.net": {
+      "daysActive": 130,
+      "daysSinceLastUpdate": 6,
+      "phishing": true,
+      "fraudReported": true
+    },
+    "linkedin-verify.com": {
+      "daysActive": 85,
+      "daysSinceLastUpdate": 1,
+      "phishing": true,
+      "fraudReported": true
+    },
+    "australiangovtax.com": {
+      "daysActive": 280,
+      "daysSinceLastUpdate": 7,
+      "phishing": true,
+      "fraudReported": false
+    },
+    "update-zoom.com": {
+      "daysActive": 90,
+      "daysSinceLastUpdate": 5,
+      "phishing": true,
+      "fraudReported": true
+    },
+    "dropbox-update.com": {
+      "daysActive": 60,
+      "daysSinceLastUpdate": 3,
+      "phishing": true,
+      "fraudReported": true
+    },
+    "outlook-verification.net": {
+      "daysActive": 150,
+      "daysSinceLastUpdate": 9,
+      "phishing": true,
+      "fraudReported": false
+    },
+    "instagram-security.com": {
+      "daysActive": 110,
+      "daysSinceLastUpdate": 2,
+      "phishing": true,
+      "fraudReported": true
+    },
+    "itunessupport.net": {
+      "daysActive": 190,
+      "daysSinceLastUpdate": 6,
+      "phishing": true,
+      "fraudReported": false
+    },
+    "hsbc-account.com": {
+      "daysActive": 140,
+      "daysSinceLastUpdate": 5,
+      "phishing": true,
+      "fraudReported": true
+    },
+    "ebay-secure.net": {
+      "daysActive": 170,
+      "daysSinceLastUpdate": 4,
+      "phishing": true,
+      "fraudReported": false
+    },
+    "chasebank-verify.com": {
+      "daysActive": 210,
+      "daysSinceLastUpdate": 1,
+      "phishing": true,
+      "fraudReported": true
+    },
+    "icloud-support.com": {
+      "daysActive": 130,
+      "daysSinceLastUpdate": 3,
+      "phishing": true,
+      "fraudReported": false
+    },
+    "verify-rsa.com": {
+      "daysActive": 200,
+      "daysSinceLastUpdate": 6,
+      "phishing": true,
+      "fraudReported": true
+    },
+    "taxrefund.gov.au.com": {
+      "daysActive": 150,
+      "daysSinceLastUpdate": 5,
+      "phishing": true,
+      "fraudReported": false
+    },
+    "account-login.net": {
+      "daysActive": 95,
+      "daysSinceLastUpdate": 2,
+      "phishing": true,
+      "fraudReported": true
+    },
+    "online-support.net": {
+      "daysActive": 120,
+      "daysSinceLastUpdate": 4,
+      "phishing": true,
+      "fraudReported": true
+    },
+    "banking-secure.net": {
+      "daysActive": 230,
+      "daysSinceLastUpdate": 7,
+      "phishing": true,
+      "fraudReported": false
+    },
+    "auspost-security.com": {
+      "daysActive": 140,
+      "daysSinceLastUpdate": 1,
+      "phishing": true,
+      "fraudReported": true
+    },
+    "facebook-verification.com": {
+      "daysActive": 60,
+      "daysSinceLastUpdate": 3,
+      "phishing": true,
+      "fraudReported": true
+    },
+    "commonwealthbank-login.com": {
+      "daysActive": 180,
+      "daysSinceLastUpdate": 6,
+      "phishing": true,
+      "fraudReported": false
+    },
+    "airbnb-verification.net": {
+      "daysActive": 125,
+      "daysSinceLastUpdate": 5,
+      "phishing": true,
+      "fraudReported": true
+    },
+    "medicare-govau.com": {
+      "daysActive": 250,
+      "daysSinceLastUpdate": 8,
+      "phishing": true,
+      "fraudReported": false
+    },
+    "outlook-securelogin.com": {
+      "daysActive": 100,
+      "daysSinceLastUpdate": 2,
+      "phishing": true,
+      "fraudReported": true
+    },
+    "twitter-security.net": {
+      "daysActive": 145,
+      "daysSinceLastUpdate": 4,
+      "phishing": true,
+      "fraudReported": false
+    },
+    "payeer.net": {
+      "daysActive": 210,
+      "daysSinceLastUpdate": 1,
+      "phishing": true,
+      "fraudReported": true
+    },
+    "mygovid-check.com": {
+      "daysActive": 80,
+      "daysSinceLastUpdate": 5,
+      "phishing": true,
+      "fraudReported": true
+    },
+    "netbanking-secure.com": {
+      "daysActive": 175,
+      "daysSinceLastUpdate": 2,
+      "phishing": true,
+      "fraudReported": false
+    },
+    "verify-myaccount.com": {
+      "daysActive": 195,
+      "daysSinceLastUpdate": 6,
+      "phishing": true,
+      "fraudReported": true
+    },
+    "telstra-support.com": {
+      "daysActive": 220,
+      "daysSinceLastUpdate": 3,
+      "phishing": true,
+      "fraudReported": false
+    },
+    "anz-security.com": {
+      "daysActive": 110,
+      "daysSinceLastUpdate": 4,
+      "phishing": true,
+      "fraudReported": true
+    },
+    "commbank-security.net": {
+      "daysActive": 160,
+      "daysSinceLastUpdate": 7,
+      "phishing": true,
+      "fraudReported": false
+    },
+    "citibank-secure.com": {
+      "daysActive": 140,
+      "daysSinceLastUpdate": 2,
+      "phishing": true,
+      "fraudReported": true
+    },
+    "amazon-authenticate.net": {
+      "daysActive": 105,
+      "daysSinceLastUpdate": 1,
+      "phishing": true,
+      "fraudReported": false
+    },
+    "nab-securelogin.com": {
+      "daysActive": 185,
+      "daysSinceLastUpdate": 5,
+      "phishing": true,
+      "fraudReported": true
+    },
+    "hsbc-verification.net": {
+      "daysActive": 170,
+      "daysSinceLastUpdate": 6,
+      "phishing": true,
+      "fraudReported": false
+    },
+    "google.com": {
+      "daysActive": 9000,
+      "daysSinceLastUpdate": 1,
+      "phishing": false,
+      "fraudReported": false
+    },
+    "facebook.com": {
+      "daysActive": 8000,
+      "daysSinceLastUpdate": 2,
+      "phishing": false,
+      "fraudReported": false
+    },
+    "amazon.com": {
+      "daysActive": 8500,
+      "daysSinceLastUpdate": 3,
+      "phishing": false,
+      "fraudReported": false
+    },
+    "apple.com": {
+      "daysActive": 10000,
+      "daysSinceLastUpdate": 2,
+      "phishing": false,
+      "fraudReported": false
+    },
+    "microsoft.com": {
+      "daysActive": 11000,
+      "daysSinceLastUpdate": 1,
+      "phishing": false,
+      "fraudReported": false
+    },
+    "netflix.com": {
+      "daysActive": 7500,
+      "daysSinceLastUpdate": 2,
+      "phishing": false,
+      "fraudReported": false
+    },
+    "twitter.com": {
+      "daysActive": 6000,
+      "daysSinceLastUpdate": 1,
+      "phishing": false,
+      "fraudReported": false
+    },
+    "linkedin.com": {
+      "daysActive": 7000,
+      "daysSinceLastUpdate": 3,
+      "phishing": false,
+      "fraudReported": false
+    },
+    "wikipedia.org": {
+      "daysActive": 8000,
+      "daysSinceLastUpdate": 4,
+      "phishing": false,
+      "fraudReported": false
+    },
+    "youtube.com": {
+      "daysActive": 6500,
+      "daysSinceLastUpdate": 1,
+      "phishing": false,
+      "fraudReported": false
+    },
+    "ebay.com": {
+      "daysActive": 9000,
+      "daysSinceLastUpdate": 2,
+      "phishing": false,
+      "fraudReported": false
+    },
+    "reddit.com": {
+      "daysActive": 5000,
+      "daysSinceLastUpdate": 1,
+      "phishing": false,
+      "fraudReported": false
+    },
+    "instagram.com": {
+      "daysActive": 4000,
+      "daysSinceLastUpdate": 3,
+      "phishing": false,
+      "fraudReported": false
+    },
+    "yahoo.com": {
+      "daysActive": 9500,
+      "daysSinceLastUpdate": 4,
+      "phishing": false,
+      "fraudReported": false
+    },
+    "nytimes.com": {
+      "daysActive": 12000,
+      "daysSinceLastUpdate": 2,
+      "phishing": false,
+      "fraudReported": false
+    },
+    "bbc.com": {
+      "daysActive": 10000,
+      "daysSinceLastUpdate": 1,
+      "phishing": false,
+      "fraudReported": false
+    },
+    "cnn.com": {
+      "daysActive": 11000,
+      "daysSinceLastUpdate": 3,
+      "phishing": false,
+      "fraudReported": false
+    },
+    "guardian.co.uk": {
+      "daysActive": 9500,
+      "daysSinceLastUpdate": 2,
+      "phishing": false,
+      "fraudReported": false
+    },
+    "bloomberg.com": {
+      "daysActive": 8000,
+      "daysSinceLastUpdate": 4,
+      "phishing": false,
+      "fraudReported": false
+    },
+    "theverge.com": {
+      "daysActive": 6000,
+      "daysSinceLastUpdate": 1,
+      "phishing": false,
+      "fraudReported": false
+    },
+    "forbes.com": {
+      "daysActive": 7000,
+      "daysSinceLastUpdate": 2,
+      "phishing": false,
+      "fraudReported": false
+    },
+    "github.com": {
+      "daysActive": 5000,
+      "daysSinceLastUpdate": 3,
+      "phishing": false,
+      "fraudReported": false
+    },
+    "stackexchange.com": {
+      "daysActive": 6500,
+      "daysSinceLastUpdate": 1,
+      "phishing": false,
+      "fraudReported": false
+    },
+    "medium.com": {
+      "daysActive": 5500,
+      "daysSinceLastUpdate": 2,
+      "phishing": false,
+      "fraudReported": false
+    },
+    "quora.com": {
+      "daysActive": 6000,
+      "daysSinceLastUpdate": 4,
+      "phishing": false,
+      "fraudReported": false
+    },
+    "spotify.com": {
+      "daysActive": 7000,
+      "daysSinceLastUpdate": 1,
+      "phishing": false,
+      "fraudReported": false
+    },
+    "dropbox.com": {
+      "daysActive": 8000,
+      "daysSinceLastUpdate": 3,
+      "phishing": false,
+      "fraudReported": false
+    },
+    "adobe.com": {
+      "daysActive": 9500,
+      "daysSinceLastUpdate": 2,
+      "phishing": false,
+      "fraudReported": false
+    },
+    "pinterest.com": {
+      "daysActive": 7000,
+      "daysSinceLastUpdate": 1,
+      "phishing": false,
+      "fraudReported": false
+    },
+    "wordpress.com": {
+      "daysActive": 11000,
+      "daysSinceLastUpdate": 4,
+      "phishing": false,
+      "fraudReported": false
+    },
+    "walmart.com": {
+      "daysActive": 9000,
+      "daysSinceLastUpdate": 3,
+      "phishing": false,
+      "fraudReported": false
+    },
+    "target.com": {
+      "daysActive": 8500,
+      "daysSinceLastUpdate": 2,
+      "phishing": false,
+      "fraudReported": false
+    },
+    "tesla.com": {
+      "daysActive": 4000,
+      "daysSinceLastUpdate": 1,
+      "phishing": false,
+      "fraudReported": false
+    },
+    "samsung.com": {
+      "daysActive": 9500,
+      "daysSinceLastUpdate": 2,
+      "phishing": false,
+      "fraudReported": false
+    },
+    "toyota.com": {
+      "daysActive": 8000,
+      "daysSinceLastUpdate": 3,
+      "phishing": false,
+      "fraudReported": false
+    },
+    "cisco.com": {
+      "daysActive": 10000,
+      "daysSinceLastUpdate": 4,
+      "phishing": false,
+      "fraudReported": false
+    },
+    "ibm.com": {
+      "daysActive": 11000,
+      "daysSinceLastUpdate": 1,
+      "phishing": false,
+      "fraudReported": false
+    },
+    "hp.com": {
+      "daysActive": 12000,
+      "daysSinceLastUpdate": 2,
+      "phishing": false,
+      "fraudReported": false
+    },
+    "intel.com": {
+      "daysActive": 13000,
+      "daysSinceLastUpdate": 3,
+      "phishing": false,
+      "fraudReported": false
+    },
+    "oracle.com": {
+      "daysActive": 9500,
+      "daysSinceLastUpdate": 1,
+      "phishing": false,
+      "fraudReported": false
+    },
+    "salesforce.com": {
+      "daysActive": 9000,
+      "daysSinceLastUpdate": 2,
+      "phishing": false,
+      "fraudReported": false
+    },
+    "zoom.us": {
+      "daysActive": 5000,
+      "daysSinceLastUpdate": 4,
+      "phishing": false,
+      "fraudReported": false
+    },
+    "slack.com": {
+      "daysActive": 6000,
+      "daysSinceLastUpdate": 1,
+      "phishing": false,
+      "fraudReported": false
+    },
+    "bitbucket.org": {
+      "daysActive": 7000,
+      "daysSinceLastUpdate": 2,
+      "phishing": false,
+      "fraudReported": false
+    },
+    "jira.com": {
+      "daysActive": 8000,
+      "daysSinceLastUpdate": 3,
+      "phishing": false,
+      "fraudReported": false
+    },
+    "confluence.com": {
+      "daysActive": 9000,
+      "daysSinceLastUpdate": 1,
+      "phishing": false,
+      "fraudReported": false
+    },
+    "zendesk.com": {
+      "daysActive": 10000,
+      "daysSinceLastUpdate": 2,
+      "phishing": false,
+      "fraudReported": false
+    },
+    "surveyMonkey.com": {
+      "daysActive": 8000,
+      "daysSinceLastUpdate": 3,
+      "phishing": false,
+      "fraudReported": false
+    }
+  }
+}

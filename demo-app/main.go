@@ -1,11 +1,12 @@
 package main
 
 import (
-	"encoding/json"
+	// Import your client package here
+	"demo-app/clientpkg"
+	"flag"
 	"html/template"
 	"log"
 	"net/http"
-	"os/exec"
 	"strings"
 )
 
@@ -29,6 +30,15 @@ type FormData struct {
 	Response    ClientResponse // New field to hold client response
 }
 
+var (
+	certFile       string
+	keyFile        string
+	caFile         string
+	participantURL string
+	cacheFile      string
+	clientId       string
+)
+
 // Struct for response handling
 type ClientResponse struct {
 	ResponseType    string
@@ -40,6 +50,16 @@ var tmpl = template.Must(template.New("index.html").Funcs(template.FuncMap{
 }).ParseFiles("index.html"))
 
 func main() {
+
+	flag.StringVar(&certFile, "cert", "certs/cert.crt", "Path to the client certificate")
+	flag.StringVar(&keyFile, "key", "certs/cert.key", "Path to the client key")
+	flag.StringVar(&caFile, "ca", "certs/ca.crt", "Path to the CA certificate")
+	flag.StringVar(&participantURL, "participants", "https://data.sandbox.raidiam.io/participants", "URL for participant data")
+	flag.StringVar(&cacheFile, "cache", "participants.json", "Path to cache file for participant data")
+	flag.StringVar(&clientId, "clientId", "https://rp.sandbox.raidiam.io/openid_relying_party/b683106b-126c-4577-9041-cb869de643a4", "Client ID for authentication")
+
+	flag.Parse()
+
 	http.HandleFunc("/", formHandler)
 	log.Println("Server started on: http://localhost:8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
@@ -55,83 +75,96 @@ func formHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
 		data.ActiveTab = r.FormValue("activeTab")
 
-		var jsonData []byte
-		var err error
-
-		// Convert form data to JSON based on active tab with the correct structure
+		// Call the appropriate function based on active tab
 		switch data.ActiveTab {
 		case "telephony":
 			data.Telephony = r.FormValue("telephony")
 			log.Println("Received telephony data:", data.Telephony)
-			jsonData, err = json.Marshal(map[string]interface{}{
-				"telephony": map[string]string{
-					"mobile": data.Telephony,
-				},
-			})
+			response, err := clientpkg.CheckTelephony(clientpkg.TelephonyParams{Mobile: data.Telephony}, certFile, keyFile, caFile, participantURL, clientId, cacheFile)
+			if err != nil {
+				data.Response = ClientResponse{
+					ResponseType:    "error",
+					ResponseMessage: err.Error(),
+				}
+			} else {
+				data.Response = ClientResponse{
+					ResponseType:    "success",
+					ResponseMessage: response.Response,
+				}
+			}
+
 		case "bank":
 			data.BankBSB = r.FormValue("bankBSB")
 			data.BankAccNo = r.FormValue("bankAccNo")
 			data.BankAccName = r.FormValue("bankAccName")
 			log.Println("Received bank data:", data.BankBSB, data.BankAccNo, data.BankAccName)
-			jsonData, err = json.Marshal(map[string]interface{}{
-				"bank": map[string]string{
-					"bsb":           data.BankBSB,
-					"accountNumber": data.BankAccNo,
-					"accountName":   data.BankAccName,
-				},
-			})
+			response, err := clientpkg.CheckBank(clientpkg.BankParams{
+				BSB:           data.BankBSB,
+				AccountNumber: data.BankAccNo,
+				AccountName:   data.BankAccName,
+			}, certFile, keyFile, caFile, participantURL, clientId, cacheFile)
+			if err != nil {
+				data.Response = ClientResponse{
+					ResponseType:    "error",
+					ResponseMessage: err.Error(),
+				}
+			} else {
+				data.Response = ClientResponse{
+					ResponseType:    "success",
+					ResponseMessage: response.Response,
+				}
+			}
+
 		case "email":
 			data.Email = r.FormValue("email")
 			log.Println("Received email data:", data.Email)
-			jsonData, err = json.Marshal(map[string]interface{}{
-				"emailAddress": map[string]string{
-					"emailAddress": data.Email,
-				},
-			})
+			response, err := clientpkg.CheckEmail(clientpkg.EmailParams{Email: data.Email}, certFile, keyFile, caFile, participantURL, clientId, cacheFile)
+			if err != nil {
+				data.Response = ClientResponse{
+					ResponseType:    "error",
+					ResponseMessage: err.Error(),
+				}
+			} else {
+				data.Response = ClientResponse{
+					ResponseType:    "success",
+					ResponseMessage: response.Response,
+				}
+			}
+
 		case "domain":
 			data.Domain = r.FormValue("domain")
 			log.Println("Received domain data:", data.Domain)
-			jsonData, err = json.Marshal(map[string]interface{}{
-				"domain": map[string]string{
-					"domain": data.Domain,
-				},
-			})
+			response, err := clientpkg.CheckDomain(clientpkg.DomainParams{Domain: data.Domain}, certFile, keyFile, caFile, participantURL, clientId, cacheFile)
+			if err != nil {
+				data.Response = ClientResponse{
+					ResponseType:    "error",
+					ResponseMessage: err.Error(),
+				}
+			} else {
+				data.Response = ClientResponse{
+					ResponseType:    "success",
+					ResponseMessage: response.Response,
+				}
+			}
+
 		case "website":
 			data.Website = r.FormValue("website")
 			log.Println("Received website data:", data.Website)
-			jsonData, err = json.Marshal(map[string]interface{}{
-				"website": map[string]string{
-					"website": data.Website,
-				},
-			})
-		case "crm":
-			data.CRMName = r.FormValue("crmName")
-			data.CRMEmail = r.FormValue("crmEmail")
-			data.CRMPhone = r.FormValue("crmPhone")
-			data.CRMBSB = r.FormValue("crmBSB")
-			data.CRMAccNo = r.FormValue("crmAccNo")
-			log.Println("Received CRM data:", data.CRMName, data.CRMEmail, data.CRMPhone, data.CRMBSB, data.CRMAccNo)
-			jsonData, err = json.Marshal(map[string]interface{}{
-				"CRM": map[string]string{
-					"name":          data.CRMName,
-					"email":         data.CRMEmail,
-					"phone":         data.CRMPhone,
-					"bsb":           data.CRMBSB,
-					"accountNumber": data.CRMAccNo,
-				},
-			})
-		}
-
-		if err != nil {
-			log.Println("Error generating JSON input:", err)
-			data.Response = ClientResponse{
-				ResponseType:    "error",
-				ResponseMessage: "Error generating JSON input: " + err.Error(),
+			response, err := clientpkg.CheckWebsite(clientpkg.WebsiteParams{Website: data.Website}, certFile, keyFile, caFile, participantURL, clientId, cacheFile)
+			if err != nil {
+				data.Response = ClientResponse{
+					ResponseType:    "error",
+					ResponseMessage: err.Error(),
+				}
+			} else {
+				data.Response = ClientResponse{
+					ResponseType:    "success",
+					ResponseMessage: response.Response,
+				}
 			}
-		} else {
-			log.Println("Generated JSON input:", string(jsonData))
-			clientResponse := processClientBinary(jsonData)
-			data.Response = clientResponse
+
+		case "crm":
+			// CRM functionality can be added here similarly
 		}
 
 		// Example logic for TrustBadge
@@ -146,70 +179,4 @@ func formHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Render the template
 	tmpl.Execute(w, data)
-}
-
-// processClientBinary executes client-binary and classifies the response
-func processClientBinary(jsonData []byte) ClientResponse {
-	output, err := executeClientBinary(jsonData)
-
-	var response ClientResponse
-
-	if err != nil {
-		response.ResponseType = "error"
-		response.ResponseMessage = "Error executing client_binary: " + err.Error()
-		return response
-	}
-
-	// Classify the output as success, warning, info, or error
-	if strings.Contains(output, "success") {
-		response.ResponseType = "success"
-		response.ResponseMessage = output
-	} else if strings.Contains(output, "info") {
-		response.ResponseType = "info"
-		response.ResponseMessage = output
-	} else if strings.Contains(output, "warning") {
-		response.ResponseType = "warning"
-		response.ResponseMessage = output
-	} else {
-		response.ResponseType = "error"
-		response.ResponseMessage = "Unknown error: " + output
-	}
-
-	return response
-}
-
-// executeClientBinary runs the client-binary with the given JSON input as a command-line argument
-func executeClientBinary(jsonData []byte) (string, error) {
-	// Log the JSON input being passed to the client binary
-	log.Println("Executing client-binary with JSON input as an argument:", string(jsonData))
-
-	// Pass the JSON data directly as a command-line argument to the client-binary
-	cmd := exec.Command("./client-binary", string(jsonData))
-
-	// Capture both stdout and stderr
-	var stdout, stderr strings.Builder
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-
-	// Run the command
-	err := cmd.Run()
-
-	// Log the stderr output for debugging
-	if stderr.Len() > 0 {
-		log.Println("Error output from client-binary (stderr):", stderr.String())
-	}
-
-	// Log the stdout output
-	if stdout.Len() > 0 {
-		log.Println("Standard output from client-binary (stdout):", stdout.String())
-	}
-
-	// Check if there was an error running the command
-	if err != nil {
-		log.Println("Error during client-binary execution:", err)
-		return "", err
-	}
-
-	// Return the trimmed stdout output
-	return strings.TrimSpace(stdout.String()), nil
 }

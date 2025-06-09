@@ -1,0 +1,154 @@
+{
+    "threat_metrics": {
+        "61471282596": {
+            "daysActive": 233,
+            "simSwap": true,
+            "fraudReported": true
+        },
+        "61440990226": {
+            "daysActive": 537,
+            "simSwap": false,
+            "fraudReported": true
+        },
+        "61440325600": {
+            "daysActive": 531,
+            "simSwap": false,
+            "fraudReported": false
+        },
+        "61461496027": {
+            "daysActive": 446,
+            "simSwap": false,
+            "fraudReported": false
+        },
+        "61446647146": {
+            "daysActive": 380,
+            "simSwap": false,
+            "fraudReported": false
+        },
+        "61431080365": {
+            "daysActive": 141,
+            "simSwap": false,
+            "fraudReported": true
+        },
+        "61487837298": {
+            "daysActive": 469,
+            "simSwap": false,
+            "fraudReported": false
+        },
+        "61454789562": {
+            "daysActive": 104,
+            "simSwap": false,
+            "fraudReported": true
+        },
+        "61430493003": {
+            "daysActive": 353,
+            "simSwap": false,
+            "fraudReported": false
+        },
+        "61435705911": {
+            "daysActive": 508,
+            "simSwap": true,
+            "fraudReported": true
+        },
+        "61468750463": {
+            "daysActive": 409,
+            "simSwap": true,
+            "fraudReported": false
+        },
+        "61478981074": {
+            "daysActive": 379,
+            "simSwap": true,
+            "fraudReported": false
+        },
+        "61425173459": {
+            "daysActive": 250,
+            "simSwap": false,
+            "fraudReported": true
+        },
+        "61418908728": {
+            "daysActive": 598,
+            "simSwap": false,
+            "fraudReported": false
+        },
+        "61442670904": {
+            "daysActive": 420,
+            "simSwap": true,
+            "fraudReported": false
+        },
+        "61497015881": {
+            "daysActive": 129,
+            "simSwap": false,
+            "fraudReported": true
+        },
+        "61427778279": {
+            "daysActive": 600,
+            "simSwap": false,
+            "fraudReported": false
+        },
+        "61432963658": {
+            "daysActive": 80,
+            "simSwap": false,
+            "fraudReported": false
+        },
+        "61404004651": {
+            "daysActive": 458,
+            "simSwap": false,
+            "fraudReported": false
+        },
+        "61496725747": {
+            "daysActive": 85,
+            "simSwap": false,
+            "fraudReported": false
+        },
+        "61499748151": {
+            "daysActive": 322,
+            "simSwap": false,
+            "fraudReported": true
+        },
+        "61448189121": {
+            "daysActive": 342,
+            "simSwap": false,
+            "fraudReported": true
+        },
+        "61415356820": {
+            "daysActive": 54,
+            "simSwap": false,
+            "fraudReported": false
+        },
+        "61463742449": {
+            "daysActive": 385,
+            "simSwap": true,
+            "fraudReported": true
+        },
+        "61407995522": {
+            "daysActive": 246,
+            "simSwap": false,
+            "fraudReported": false
+        },
+        "61483902020": {
+            "daysActive": 208,
+            "simSwap": false,
+            "fraudReported": true
+        },
+        "61453640252": {
+            "daysActive": 381,
+            "simSwap": true,
+            "fraudReported": false
+        },
+        "61448587473": {
+            "daysActive": 116,
+            "simSwap": false,
+            "fraudReported": false
+        },
+        "61460797543": {
+            "daysActive": 170,
+            "simSwap": false,
+            "fraudReported": false
+        },
+        "61417812342": {
+            "daysActive": 253,
+            "simSwap": false,
+            "fraudReported": true
+        }
+    }
+}

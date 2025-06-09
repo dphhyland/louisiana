@@ -1,0 +1,104 @@
+{
+  "confirmation_of_payee": [
+    {
+      "bsb": "062000",
+      "accountNumber": "12345678",
+      "accountName": "John Doe"
+    },
+    {
+      "bsb": "062000",
+      "accountNumber": "23456789",
+      "accountName": "Jonathan Doe"
+    },
+    {
+      "bsb": "062001",
+      "accountNumber": "34567890",
+      "accountName": "Jane Smith"
+    },
+    {
+      "bsb": "062001",
+      "accountNumber": "45678901",
+      "accountName": "R Bragg"
+    },
+    {
+      "bsb": "062002",
+      "accountNumber": "56789012",
+      "accountName": "Emily Johnson"
+    },
+    {
+      "bsb": "062002",
+      "accountNumber": "67890123",
+      "accountName": "Michael Brown"
+    },
+    {
+      "bsb": "062003",
+      "accountNumber": "78901234",
+      "accountName": "Sarah Davis"
+    },
+    {
+      "bsb": "062003",
+      "accountNumber": "89012345",
+      "accountName": "David Clark"
+    },
+    {
+      "bsb": "062004",
+      "accountNumber": "90123456",
+      "accountName": "Laura King"
+    },
+    {
+      "bsb": "062004",
+      "accountNumber": "12345679",
+      "accountName": "James White"
+    },
+    {
+      "bsb": "062005",
+      "accountNumber": "23456780",
+      "accountName": "Olivia Harris"
+    },
+    {
+      "bsb": "062005",
+      "accountNumber": "34567891",
+      "accountName": "Sophia Wilson"
+    },
+    {
+      "bsb": "062006",
+      "accountNumber": "45678902",
+      "accountName": "Liam Robinson"
+    },
+    {
+      "bsb": "062006",
+      "accountNumber": "56789013",
+      "accountName": "Ella Turner"
+    },
+    {
+      "bsb": "062007",
+      "accountNumber": "67890124",
+      "accountName": "Jack Walker"
+    },
+    {
+      "bsb": "062007",
+      "accountNumber": "78901235",
+      "accountName": "Mia Adams"
+    },
+    {
+      "bsb": "062008",
+      "accountNumber": "89012346",
+      "accountName": "Noah Scott"
+    },
+    {
+      "bsb": "062008",
+      "accountNumber": "90123457",
+      "accountName": "Lucas Baker"
+    },
+    {
+      "bsb": "062009",
+      "accountNumber": "12345680",
+      "accountName": "Chloe Mitchell"
+    },
+    {
+      "bsb": "062009",
+      "accountNumber": "23456781",
+      "accountName": "Ava Carter"
+    }
+  ]
+}
